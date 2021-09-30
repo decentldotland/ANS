@@ -17,11 +17,12 @@ export async function handle(state, action) {
   const blockHeight = SmartWeave.block.height;
 
   // alphabetical lower case characters + integers from 0 to 9
-  const allowedCharCodes = [
-    48, 49, 50, 51, 52, 53, 54, 55, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102,
-    103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
-    118, 119, 120, 121, 122,
-  ];
+const allowedCharCodes = [
+  48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104,
+  105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+  120, 121, 122,
+];
+
   // ERRORS LIST,
   const ERROR_INVALID_ARWEAVE_ADDRESS =
     "the provided string is not a valid Arweave address";
