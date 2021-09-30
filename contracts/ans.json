@@ -1,0 +1,16 @@
+{
+  "users": [],
+  "availableLabels": {
+    "ni": 1260,
+    "san": 42840,
+    "shi": 1413720,
+    "go": 45239040,
+    "roku": 1402410240,
+    "shichi": 42072307200
+  },
+  "balances": {},
+  "invocations": [],
+  "foreignCalls": [],
+  "deposits": [],
+  "withdrawals": []
+}

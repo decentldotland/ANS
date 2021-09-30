@@ -1,0 +1,35 @@
+{
+  "name": "ans-arweave",
+  "version": "1.0.0",
+  "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
+  "main": "lib/api.js",
+  "scripts": {
+    "start": "node lib/api.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/decentldotland/ANS.git"
+  },
+  "keywords": [
+    "arweave",
+    "domains",
+    "web3",
+    "api"
+  ],
+  "author": "charmful0x",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/decentldotland/ANS/issues"
+  },
+  "dependencies": {
+    "arweave": "^1.10.16",
+    "express": "^4.17.1",
+    "prettier": "^2.4.1",
+    "redstone-smartweave": "^0.3.10-alpha.12",
+    "secure-env": "^1.2.0"
+  },
+  "engines": {
+    "node": "14.17.1",
+    "npm": "6.14.13"
+  }
+}
