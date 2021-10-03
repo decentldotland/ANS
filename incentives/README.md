@@ -33,7 +33,8 @@ the ANS protocol implements the first in-contract profit sharing.
 - Profit sharing percentage's  allocation is inversely proportional with the `to_mint` label length
 
 The profit sharing percentage is calculated according to the following formula:
-<img src="https://render.githubusercontent.com/render/math?math= \HUGE ((a%20%2B%20b)%20%2F%20(a-b))%20*%20100%20%2F%20e%5Eb">
+
+<img src="https://render.githubusercontent.com/render/math?math=\Huge ((a%20%2B%20b)%20%2F%20(a-b))%20*%20100%20%2F%20e%5Eb">
 
 The formula computes the calculation for `to_mint` label on every label having a length not equal and lower than its length. The `a` variable in the formula stands for `to_mint.length` ,  and `b` for `radical.length` .
 
@@ -41,7 +42,7 @@ The formula computes the calculation for `to_mint` label on every label having a
 
 The following diagrams visualise the calculation of profit sharing percentage for radical's length per `to_mint` length
 
-<img src="./img/1-5.png">
+<img src="./img/1-1.png">
 
 <img src="./img/1-3.png">
 
