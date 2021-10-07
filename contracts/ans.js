@@ -102,6 +102,10 @@ const allowedCharCodes = [
     // subs 1 from the label supply
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
+    
+    if (label.length > 2) {
+      _por(label, labelMintingCost);
+    }
 
     const labelObject = {
       label: label,
@@ -150,6 +154,11 @@ const allowedCharCodes = [
 
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
+   
+     if (label.length > 2) {
+      _por(label, labelMintingCost);
+    }
+    
     users[callerIndex]["ownedLabels"].push(labelObject);
 
     return { state };
@@ -625,5 +634,122 @@ const allowedCharCodes = [
       labelIndex: labelIndex,
       callerIndex: callerIndex,
     };
+  }
+
+  function _getSharePerRadicalOwner(label) {
+    const radicalsOwners = users.filter((usr) =>
+      usr["ownedLabels"].filter(
+        (labels) => label.includes(labels["label"]) && label.length < 6
+      )
+    );
+    const owners = {};
+
+    for (let owner of radicalsOwners) {
+      owners[owner.user] = {};
+
+      owner["ownedLabels"].forEach((labels) => {
+        if (label.includes(labels["label"])) {
+          if (!owners[owner.user][labels["scarcity"]]) {
+            owners[owner.user][labels["scarcity"]] = 1;
+          } else {
+            owners[owner.user][labels["scarcity"]] += 1;
+          }
+        }
+      });
+    }
+
+    return owners;
+  }
+
+  function _allocatePerRadicalScarcity(label) {
+    const owners = _getSharePerRadicalOwner(label);
+
+    const shares = {
+      ni: [],
+      san: [],
+      shi: [],
+      go: [],
+      roku: [],
+    };
+
+    for (let user in owners) {
+      const userShares = owners[user];
+
+      for (let labelShare of Object.entries(userShares)) {
+        const data = [user, labelShare[1]];
+        shares[labelShare[0]].push(data);
+      }
+    }
+
+    return shares;
+  }
+
+  function _por(toMintLable, mintingCost) {
+    const a = toMintLable.length;
+    const unsortedPercentages = [];
+    const foundRadicals = [];
+    const shares = _allocatePerRadicalScarcity(toMintLable);
+
+    for (let radical in shares) {
+      const b = __getRadicalLength(radical); // radical length
+
+      if (b < a && a !== b) {
+        const radicalPercentage = (((a + b) / (a - b)) * 100) / Math.E ** b;
+        unsortedPercentages.push((radicalPercentage / 100) * mintingCost);
+        foundRadicals.push(radical);
+      }
+    }
+
+    const sortedPercentages = unsortedPercentages.sort((a, b) => a - b);
+    const scarcityPercentagesArray = sortedPercentages.map(
+      (percentage, index) => [foundRadicals[index], percentage]
+    );
+    const finalDistribution = Object.fromEntries(scarcityPercentagesArray);
+
+    return __distributeProfitSharing(finalDistribution, shares, mintingCost);
+  }
+
+  function __distributeProfitSharing(finalDistribution, shares, mintingCost) {
+    for (let share in shares) {
+      const sharePerScarcity = shares[share].flat();
+
+      if (sharePerScarcity.length >= 1) {
+        const totalShares = sharePerScarcity
+          .filter((element) => typeof element === "number")
+          .reduce((a, b) => a + b, 0);
+        const totalRewardFromFee =
+          (finalDistribution[share] / 100) * mintingCost;
+        const rewardPerShare = totalRewardFromFee / totalShares;
+
+        shares[share].forEach((user) => {
+          if (!balances[user[0]]) {
+            // if the user's account was setted up at transfer event
+            balances[user[0]] = 0;
+          }
+          const sharePerUser = user[1];
+          balances[user[0]] += rewardPerShare * sharePerUser;
+          state.totalProfitSharing += rewardPerShare * sharePerUser;
+        });
+      }
+    }
+  }
+
+  function __getRadicalLength(scarcity) {
+    switch (scarcity) {
+      case "ni":
+        return 2;
+
+      case "san":
+        return 3;
+
+      case "shi":
+        return 4;
+
+      case "go":
+        return 5;
+
+      case "roku":
+        return 6;
+    }
   }
 }
