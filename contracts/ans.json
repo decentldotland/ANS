@@ -12,5 +12,6 @@
   "invocations": [],
   "foreignCalls": [],
   "deposits": [],
-  "withdrawals": []
+  "withdrawals": [],
+  "totalProfitSharing": 0
 }
