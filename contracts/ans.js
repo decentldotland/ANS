@@ -166,6 +166,21 @@ const allowedCharCodes = [
 
     return { state };
   }
+  
+  if (input.function === "abdictOwnership") {
+    const label = input.label;
+
+    _validateArweaveAddress(caller);
+    const desiredLabel = _validateUsername(label, "read");
+    const { labelIndex, callerIndex } = _checkAbdicationPermission(
+      desiredLabel,
+      caller
+    );
+
+    users[callerIndex]["ownedLabels"].splice(labelIndex, 1);
+
+    return { state };
+  }
 
   if (input.function === "transfer") {
     const target = input.target;
@@ -583,6 +598,31 @@ const allowedCharCodes = [
     // make the transfer and burn caller's account
     return {
       ownedIn: "currentLabel",
+      callerIndex: callerIndex,
+    };
+  }
+  
+  function _checkAbdicationPermission(label, address) {
+    const callerIndex = users.findIndex(
+      (usr) =>
+        usr.user === address &&
+        usr["ownedLabels"].find((labels) => labels.label === label)
+    );
+
+    if (callerIndex === -1) {
+      throw new ContractError(ERROR_LABEL_NOT_OWNED);
+    }
+
+    if (users[callerIndex]["ownedLabels"].length === 1) {
+      throw new ContractError(ERROR_CANNOT_ABDICT_CURENT_LABEL);
+    }
+
+    const labelIndex = users[callerIndex]["ownedLabels"].findIndex(
+      (labels) => labels.label === label
+    );
+
+    return {
+      labelIndex: labelIndex,
       callerIndex: callerIndex,
     };
   }
