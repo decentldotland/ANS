@@ -120,6 +120,7 @@ const allowedCharCodes = [
       ownedLabels: [labelObject],
       bio: bio,
       avatar: avatar,
+      earnings: 0,
     });
 
     return { state };
@@ -729,6 +730,7 @@ const allowedCharCodes = [
           const sharePerUser = user[1];
           balances[user[0]] += rewardPerShare * sharePerUser;
           state.totalProfitSharing += rewardPerShare * sharePerUser;
+          __addUserEarning(user[0], rewardPerShare * sharePerUser);
         });
       }
     }
@@ -751,5 +753,10 @@ const allowedCharCodes = [
       case "roku":
         return 6;
     }
+  }
+
+  function __addUserEarning(address, rewardToAdd) {
+    const userIndex = users.findIndex((usr) => usr.user === address);
+    users[userIndex]["earnings"] += rewardToAdd;
   }
 }
