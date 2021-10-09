@@ -177,6 +177,28 @@ const allowedCharCodes = [
     return { state };
   }
   
+  if (input.function === "updateBio") {
+    const bio = input.bio;
+
+    _validateArweaveAddress(caller);
+    const callerIndex = users.findIndex((usr) => usr.user === caller);
+
+    _validateStringTypeLength(bio, 0, 75);
+    users[callerIndex]["bio"] = bio;
+    return { state };
+  }
+
+  if (input.function === "updateAvatar") {
+    const avatar = input.avatar;
+
+    _validateArweaveAddress(caller);
+    const callerIndex = users.findIndex((usr) => usr.user === caller);
+
+    await _validateAvatar(avatar);
+    users[callerIndex]["avatar"] = avatar;
+    return { state };
+  }
+  
   if (input.function === "abdictOwnership") {
     const label = input.label;
 
