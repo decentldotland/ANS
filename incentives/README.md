@@ -48,6 +48,9 @@ The following diagrams visualize the calculation of profit-sharing percentage fo
 
 You can find the full test [here](./img) . Notice how a RL with a character length of 2 shares the lower allocation because its frequency as a radical will be the highest, while the RL with a character length of 6 shares the highest allocation.
 
+## Cashback
+The current PoR's model does not exclude self-owned radicals while calculating profit sharing at new label `mint` event. Thus, owners can also get a "cashback" for minting a new label with an pre-minting self-owned radical.
+
 ## License
 
 The project is licensed under the MIT license.
