@@ -66,5 +66,14 @@ Labels may be a new asset with new standars not compatible with PSTs or atomic N
 - create an economical experience and new opportunities
 - incentives for `$DLT` holders through marketplace earned fees
 
+## Label Asset Type
+ANS labels are digital properties fully owned and managed by the `user` (aka label's owner post-minting). ANS spec introduces a new asset / tokenized mechanism to the Arweave ecosystem that applies the profit sharing concept introduced in [PSCs](https://coinmarketcap.com/alexandria/article/profit-sharing-communities-a-deep-dive-by-arweave) and [PSTs](https://arweave.medium.com/profit-sharing-tokens-a-new-incentivization-mechanism-for-an-open-web-1f2532411d6e).
 
+ANS-labels are Profit Sharing Domains (PSD) for having the following features:
+- Basic ***token*** functionalities: ownership, transferability, & trade-ability.
+- The first in-contract, on-chain ***profit sharing*** mechanism through the [PoR](https://github.com/decentldotland/ANS/tree/main/incentives) incentives model.
+- ***Domain*** Name Service: address resolving & DeGravatar.
+
+## License
+The project is licensed under the [MIT](https://github.com/decentldotland/ANS/blob/main/LICENSE) license.
 
