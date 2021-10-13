@@ -9,6 +9,7 @@
     "shichi": 42072307200
   },
   "balances": {},
+  "supportedUrlTypes": ["text/html"],
   "invocations": [],
   "foreignCalls": [],
   "deposits": [],
