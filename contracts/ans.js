@@ -39,6 +39,7 @@ const allowedCharCodes = [
   const ERROR_MISSING_REQUIRED_TAG = "the transaction requires a missing tag";
   const ERROR_INVALID_AVATAR_TYPE =
     "only image/* MIME type is allowed for avatars";
+  const ERROR_INVALID_URL_TYPE = "the given url mime type is not supported";
   const ERROR_CALLER_EXIST = "the caller has already init-mint";
   const ERROR_USER_HAS_NOT_REGISTERED =
     "caller must execute 'setProfile' before performing this action";
@@ -71,10 +72,16 @@ const allowedCharCodes = [
     "you have to switch the label from currentLabel to ownedLabels before making the transfer";
   const ERROR_INVALID_TARGET_TRANSFER =
     "the target is not a valid arweave address";
+  const ERROR_CANNOT_ABDICT_CURENT_LABEL =
+    "label's abdiction is only allowed for multi-owned labels";
+  const ERROR_INVALID_CALLER =
+    "the caller does not has the permission to call this function";
+  
 
   if (input.function === "setProfile") {
     const username = input.username;
     const bio = input.bio;
+    const url = input.url;
     let avatar = input.avatar;
 
     _validateArweaveAddress(caller);
@@ -99,6 +106,10 @@ const allowedCharCodes = [
       await _validateAvatar(avatar);
     }
 
+    if (url.length > 0) {
+      await _validateUrl(url);
+    }
+    
     // subs 1 from the label supply
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
@@ -119,6 +130,7 @@ const allowedCharCodes = [
       currentLabel: label,
       ownedLabels: [labelObject],
       bio: bio,
+      url,
       avatar: avatar,
       earnings: 0,
     });
@@ -199,6 +211,17 @@ const allowedCharCodes = [
     return { state };
   }
   
+  if (input.function === "updateUrl") {
+    const url = input.url;
+
+    _validateArweaveAddress(caller);
+    const callerIndex = users.findIndex((usr) => usr.user === caller);
+
+    await _validateUrl(url);
+    users[callerIndex]["url"] = url;
+    return { state };
+  }
+  
   if (input.function === "abdictOwnership") {
     const label = input.label;
 
@@ -214,6 +237,23 @@ const allowedCharCodes = [
     return { state };
   }
 
+  if (input.function === "isOwned") {
+    const label = input.label;
+
+    const validatedLabel = _validateUsername(label, "read");
+    const existence = users.find((usr) =>
+      usr["ownedLabels"].find((labels) => labels.label === validatedLabel)
+    );
+
+    const response = existence ? true : false;
+
+    return {
+      result: {
+        isOwned: response,
+      },
+    };
+  }
+  
   if (input.function === "transfer") {
     const target = input.target;
     const label = input.label;
@@ -283,6 +323,29 @@ const allowedCharCodes = [
     }
   }
 
+  // CONTRACT OWNER PERMISSIONS
+  if (input.function === "addUrlMimeType") {
+    const type = input.type;
+
+    await _validateOnlyOwner();
+    state.supportedUrlTypes.push(type);
+
+    return { state };
+  }
+
+  if (input.function === "revokeUrlMimeType") {
+    const type = input.type;
+
+    await _validateOnlyOwner();
+    const typeIndex = state.supportedUrlTypes.findIndex(type);
+
+    if (typeIndex !== -1) {
+      state.supportedUrlTypes.splice(typeIndex, 1);
+    }
+
+    return { state };
+  }
+  
   // WDLT ACTIONS
 
   if (input.function === "getAddressOf") {
@@ -428,6 +491,43 @@ const allowedCharCodes = [
     }
   }
 
+  async function _validateUrl(url) {
+    _validateStringTypeLength(url, 43, 43);
+
+    const tagsMap = new Map();
+    const url_tx = await SmartWeave.unsafeClient.transactions.get(url);
+    const tags = url_tx.get("tags");
+
+    for (let tag of tags) {
+      let key = tag.get("name", { decode: true, string: true });
+      let value = tag.get("value", { decode: true, string: true });
+      tagsMap.set(key, value);
+    }
+
+    if (!tagsMap.has("Content-Type")) {
+      throw new ContractError(ERROR_MISSING_REQUIRED_TAG);
+    }
+
+    if (!state.supportedUrlTypes.includes(tagsMap.get("Content-Type"))) {
+      throw new ContractError(ERROR_INVALID_URL_TYPE);
+    }
+  }
+
+  async function _validateOnlyOwner() {
+    const contractID = SmartWeave.contract.id;
+    const contractTxObject = await SmartWeave.unsafeClient.transactions.get(
+      contractID
+    );
+    const base64Owner = contractTxObject["owner"];
+    const contractOwner = await SmartWeave.unsafeClient.wallets.ownerToAddress(
+      base64Owner
+    );
+
+    if (caller !== contractOwner) {
+      throw new ContractError(ERROR_INVALID_CALLER);
+    }
+  }
+  
   function _getUsernameScarcity(username) {
     switch (username.length) {
       case 2:
