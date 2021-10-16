@@ -316,6 +316,7 @@ export async function handle(state, action) {
         ownedLabels: [],
         bio: "account's metadata auto-generated at a transfer event",
         avatar: "78WdrVhNZ2i_KbimqcV4j-drX04HJr3E6UyD7xWc84Q",
+        links: {}
       };
     }
 
