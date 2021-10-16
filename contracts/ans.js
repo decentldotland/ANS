@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: MIT
-
 export async function handle(state, action) {
   const input = action.input;
   const caller = action.caller;
@@ -17,12 +15,11 @@ export async function handle(state, action) {
   const blockHeight = SmartWeave.block.height;
 
   // alphabetical lower case characters + integers from 0 to 9
-const allowedCharCodes = [
-  48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104,
-  105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
-  120, 121, 122,
-];
-
+  const allowedCharCodes = [
+    48, 49, 50, 51, 52, 53, 54, 55, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103,
+    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122,
+  ];
   // ERRORS LIST,
   const ERROR_INVALID_ARWEAVE_ADDRESS =
     "the provided string is not a valid Arweave address";
@@ -41,6 +38,7 @@ const allowedCharCodes = [
     "only image/* MIME type is allowed for avatars";
   const ERROR_INVALID_URL_TYPE = "the given url mime type is not supported";
   const ERROR_CALLER_EXIST = "the caller has already init-mint";
+  const ERROR_CALLER_NOT_EXIST = "the caller has not init-mint";
   const ERROR_USER_HAS_NOT_REGISTERED =
     "caller must execute 'setProfile' before performing this action";
   const ERROR_INVALID_LABEL_FORMAT = "the given string is not a valid label";
@@ -76,13 +74,23 @@ const allowedCharCodes = [
     "label's abdiction is only allowed for multi-owned labels";
   const ERROR_INVALID_CALLER =
     "the caller does not has the permission to call this function";
-  
+  const ERROR_INVALID_GH_USRNAME =
+    "the given username is not a valid github username";
+  const ERROR_INVALID_TWTR_USRNAME =
+    "the given username is not a valid Twitter username";
+  const ERROR_INVALID_CUSTOM_URL = "the given url is not valid";
 
   if (input.function === "setProfile") {
     const username = input.username;
     const bio = input.bio;
     const url = input.url;
+
     let avatar = input.avatar;
+    let github = input.github;
+    let twitter = input.twitter;
+    let customUrl = input.customUrl;
+
+    const socialLinks = {};
 
     _validateArweaveAddress(caller);
     _validateStringTypeLength(bio, 0, 75);
@@ -109,11 +117,26 @@ const allowedCharCodes = [
     if (url.length > 0) {
       await _validateUrl(url);
     }
-    
+
+    if (github) {
+      _validateGithubUsername(github);
+      socialLinks["github"] = github;
+    }
+
+    if (twitter) {
+      _validateTwitterUsername(twitter);
+      socialLinks["twitter"] = twitter;
+    }
+
+    if (customUrl) {
+      _validateCustomUrl(customUrl);
+      socialLinks["customUrl"] = customUrl;
+    }
+
     // subs 1 from the label supply
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
-    
+
     if (label.length > 2) {
       _por(label, labelMintingCost);
     }
@@ -130,9 +153,10 @@ const allowedCharCodes = [
       currentLabel: label,
       ownedLabels: [labelObject],
       bio: bio,
-      url,
+      url: url,
       avatar: avatar,
       earnings: 0,
+      links: socialLinks,
     });
 
     return { state };
@@ -167,11 +191,11 @@ const allowedCharCodes = [
 
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
-   
-     if (label.length > 2) {
+
+    if (label.length > 2) {
       _por(label, labelMintingCost);
     }
-    
+
     users[callerIndex]["ownedLabels"].push(labelObject);
 
     return { state };
@@ -188,12 +212,11 @@ const allowedCharCodes = [
 
     return { state };
   }
-  
+
   if (input.function === "updateBio") {
     const bio = input.bio;
 
-    _validateArweaveAddress(caller);
-    const callerIndex = users.findIndex((usr) => usr.user === caller);
+    const callerIndex = _validateUserExistence(caller);
 
     _validateStringTypeLength(bio, 0, 75);
     users[callerIndex]["bio"] = bio;
@@ -203,25 +226,53 @@ const allowedCharCodes = [
   if (input.function === "updateAvatar") {
     const avatar = input.avatar;
 
-    _validateArweaveAddress(caller);
-    const callerIndex = users.findIndex((usr) => usr.user === caller);
+    const callerIndex = _validateUserExistence(caller);
 
     await _validateAvatar(avatar);
     users[callerIndex]["avatar"] = avatar;
     return { state };
   }
-  
+
   if (input.function === "updateUrl") {
     const url = input.url;
 
-    _validateArweaveAddress(caller);
-    const callerIndex = users.findIndex((usr) => usr.user === caller);
+    const callerIndex = _validateUserExistence(caller);
 
     await _validateUrl(url);
     users[callerIndex]["url"] = url;
     return { state };
   }
-  
+
+  if (input.function === "updateGithub") {
+    const github = input.github;
+
+    const callerIndex = _validateUserExistence(caller);
+    _validateGithubUsername(github);
+    users[callerIndex]["links"]["github"] = github;
+
+    return { state };
+  }
+
+  if (input.function === "updateTwitter") {
+    const twitter = input.twitter;
+
+    const callerIndex = _validateUserExistence(caller);
+    _validateTwitterUsername(twitter);
+    users[callerIndex]["links"]["twitter"] = twitter;
+
+    return { state };
+  }
+
+  if (input.function === "updateCustomUrl") {
+    const customUrl = input.customUrl;
+
+    const callerIndex = _validateUserExistence(caller);
+    _validateCustomUrl(customUrl);
+    users[callerIndex]["links"]["customUrl"] = customUrl;
+
+    return { state };
+  }
+
   if (input.function === "abdictOwnership") {
     const label = input.label;
 
@@ -237,23 +288,6 @@ const allowedCharCodes = [
     return { state };
   }
 
-  if (input.function === "isOwned") {
-    const label = input.label;
-
-    const validatedLabel = _validateUsername(label, "read");
-    const existence = users.find((usr) =>
-      usr["ownedLabels"].find((labels) => labels.label === validatedLabel)
-    );
-
-    const response = existence ? true : false;
-
-    return {
-      result: {
-        isOwned: response,
-      },
-    };
-  }
-  
   if (input.function === "transfer") {
     const target = input.target;
     const label = input.label;
@@ -265,7 +299,8 @@ const allowedCharCodes = [
     const desiredLabel = _validateUsername(label, "read");
     const { ownedIn, callerIndex } = _getTransferablityStatus(
       desiredLabel,
-      caller
+      caller,
+      target
     );
 
     const callerProfile = users[callerIndex];
@@ -345,7 +380,24 @@ const allowedCharCodes = [
 
     return { state };
   }
-  
+
+  if (input.function === "isOwned") {
+    const label = input.label;
+
+    const validatedLabel = _validateUsername(label, "read");
+    const existence = users.find((usr) =>
+      usr["ownedLabels"].find((labels) => labels.label === validatedLabel)
+    );
+
+    const response = existence ? true : false;
+
+    return {
+      result: {
+        isOwned: response,
+      },
+    };
+  }
+
   // WDLT ACTIONS
 
   if (input.function === "getAddressOf") {
@@ -418,6 +470,17 @@ const allowedCharCodes = [
     }
   }
 
+  function _validateUserExistence(address) {
+    _validateArweaveAddress(address);
+    const callerIndex = users.findIndex((usr) => usr.user === address);
+
+    if (callerIndex === -1) {
+      throw new ContractError(ERROR_CALLER_NOT_EXIST);
+    }
+
+    return callerIndex;
+  }
+
   function _validateStringTypeLength(string, minLen, maxLex) {
     if (typeof string !== "string") {
       throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
@@ -472,6 +535,7 @@ const allowedCharCodes = [
   }
 
   async function _validateAvatar(avatar) {
+    _validateStringTypeLength(avatar, 43, 43);
     const tagsMap = new Map();
     const avatar_tx = await SmartWeave.unsafeClient.transactions.get(avatar);
     const tags = avatar_tx.get("tags");
@@ -513,21 +577,45 @@ const allowedCharCodes = [
     }
   }
 
+  function _validateGithubUsername(username) {
+    if (typeof username !== "string") {
+      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
+    }
+
+    const regex = /^([a-zA-Z0-9_]{1,38})$/i;
+    const test = regex.test(username);
+
+    if (!test) {
+      throw new ContractError(ERROR_INVALID_GH_USRNAME);
+    }
+  }
+
+  function _validateTwitterUsername(username) {
+    if (typeof username !== "string") {
+      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
+    }
+    const regex = /^@?([a-zA-Z0-9_]{1,15})$/i;
+    const test = regex.test(username);
+
+    if (!test) {
+      throw new ContractError(ERROR_INVALID_TWTR_USRNAME);
+    }
+  }
+
+  function _validateCustomUrl(link) {
+    if (typeof link !== "string") {
+      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
+    }
+  }
+
   async function _validateOnlyOwner() {
-    const contractID = SmartWeave.contract.id;
-    const contractTxObject = await SmartWeave.unsafeClient.transactions.get(
-      contractID
-    );
-    const base64Owner = contractTxObject["owner"];
-    const contractOwner = await SmartWeave.unsafeClient.wallets.ownerToAddress(
-      base64Owner
-    );
+    const contractOwner = SmartWeave.contract.owner;
 
     if (caller !== contractOwner) {
       throw new ContractError(ERROR_INVALID_CALLER);
     }
   }
-  
+
   function _getUsernameScarcity(username) {
     switch (username.length) {
       case 2:
@@ -702,8 +790,12 @@ const allowedCharCodes = [
     return callerIndex;
   }
 
-  function _getTransferablityStatus(label, address) {
-    const callerIndex = users.findIndex((usr) => usr.user === address);
+  function _getTransferablityStatus(label, from_address, to_address) {
+    if (from_address === to_address) {
+      throw new ContractError(ERROR_INVALID_TARGET_TRANSFER);
+    }
+
+    const callerIndex = users.findIndex((usr) => usr.user === from_address);
     const callerProfile = users[callerIndex];
 
     // check if the label is owner in the "ownedLabels" array
@@ -733,7 +825,7 @@ const allowedCharCodes = [
       callerIndex: callerIndex,
     };
   }
-  
+
   function _checkAbdicationPermission(label, address) {
     const callerIndex = users.findIndex(
       (usr) =>
@@ -858,6 +950,11 @@ const allowedCharCodes = [
     }
   }
 
+  function __addUserEarning(address, rewardToAdd) {
+    const userIndex = users.findIndex((usr) => usr.user === address);
+    users[userIndex]["earnings"] += rewardToAdd;
+  }
+
   function __getRadicalLength(scarcity) {
     switch (scarcity) {
       case "ni":
@@ -875,10 +972,5 @@ const allowedCharCodes = [
       case "roku":
         return 6;
     }
-  }
-
-  function __addUserEarning(address, rewardToAdd) {
-    const userIndex = users.findIndex((usr) => usr.user === address);
-    users[userIndex]["earnings"] += rewardToAdd;
   }
 }
