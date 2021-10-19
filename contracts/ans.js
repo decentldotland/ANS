@@ -464,6 +464,21 @@ export async function handle(state, action) {
     return { state };
   }
 
+  if (input.function === "balanceOf") {
+    // the function return the DLT balance of an
+    // address that is deposited in the SWC (ANS)
+    const address = input.address;
+
+    _validateArweaveAddress(address);
+
+    const balance = balances[address] ? balances[address] : 0;
+
+    return {
+      result: {
+        balance: balance,
+      },
+    };
+  }
   // HELPER FUNCTIONS
   function _validateArweaveAddress(address) {
     if (typeof address !== "string" || address.length !== 43) {
