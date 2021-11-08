@@ -16,9 +16,9 @@ export async function handle(state, action) {
 
   // alphabetical lower case characters + integers from 0 to 9
   const allowedCharCodes = [
-    48, 49, 50, 51, 52, 53, 54, 55, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103,
-    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
-    119, 120, 121, 122,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104,
+    105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+    120, 121, 122,
   ];
   // ERRORS LIST,
   const ERROR_INVALID_ARWEAVE_ADDRESS =
@@ -82,6 +82,7 @@ export async function handle(state, action) {
 
   if (input.function === "setProfile") {
     const username = input.username;
+    const nickname = input.nickname;
     const bio = input.bio;
     const url = input.url;
 
@@ -97,6 +98,7 @@ export async function handle(state, action) {
     _validateStringTypeLength(username, 2, 7);
 
     const label = _validateUsername(username);
+    const validatedNickname = _validateNickname(nickname);
     const labelScarcity = _getUsernameScarcity(label);
     const labelMintingCost = _getMintingCost(label);
 
@@ -152,6 +154,7 @@ export async function handle(state, action) {
       user: caller,
       currentLabel: label,
       ownedLabels: [labelObject],
+      nickname: nickname,
       bio: bio,
       url: url,
       avatar: avatar,
@@ -242,6 +245,16 @@ export async function handle(state, action) {
     users[callerIndex]["url"] = url;
     return { state };
   }
+  
+  if (input.function === "updateNickname") {
+    const nickname = input.nickname;
+
+    const callerIndex = _validateUserExistence(caller);
+
+    const validatedNickname = _validateNickname(nickname);
+    users[callerIndex]["nickname"] = nickname;
+    return { state };
+  }
 
   if (input.function === "updateGithub") {
     const github = input.github;
@@ -314,6 +327,7 @@ export async function handle(state, action) {
         user: target,
         currentLabel: "",
         ownedLabels: [],
+        nickname: `Arweaver#${SmartWeave.block.height}`,
         bio: "account's metadata auto-generated at a transfer event",
         avatar: "78WdrVhNZ2i_KbimqcV4j-drX04HJr3E6UyD7xWc84Q",
         links: {}
@@ -622,6 +636,16 @@ export async function handle(state, action) {
     if (typeof link !== "string") {
       throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
     }
+  }
+  
+  function _validateNickname(nickname) {
+    _validateStringTypeLength(nickname, 1, 30);
+    // trim the nickname to ensure a good UX
+    // e.g. eliminate right-left whitespace
+    const trimmed = nickname.trim();
+    _validateStringTypeLength(trimmed, 1, 30);
+
+    return trimmed;
   }
 
   async function _validateOnlyOwner() {
