@@ -95,7 +95,7 @@ export async function handle(state, action) {
 
     _validateArweaveAddress(caller);
     _validateStringTypeLength(bio, 0, 75);
-    _validateStringTypeLength(username, 2, 7);
+    _validateStringTypeLength(username, 2, 15);
 
     const label = _validateUsername(username);
     const validatedNickname = _validateNickname(nickname);
@@ -169,7 +169,7 @@ export async function handle(state, action) {
     const username = input.username;
 
     _validateArweaveAddress(caller);
-    _validateStringTypeLength(username, 2, 7);
+    _validateStringTypeLength(username, 2, 15);
 
     const label = _validateUsername(username);
     const labelScarcity = _getUsernameScarcity(label);
@@ -195,7 +195,7 @@ export async function handle(state, action) {
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
 
-    if (label.length > 2) {
+    if (label.length > 2 && label.length < 15) {
       _por(label, labelMintingCost);
     }
 
@@ -539,7 +539,7 @@ export async function handle(state, action) {
       }
     }
 
-    if (normalizedUsername.length < 2 || normalizedUsername.length > 7) {
+    if (normalizedUsername.length < 2 || normalizedUsername.length > 15) {
       throw new ContractError(ERROR_INVALID_STRING_LENGTH);
     }
     // used to just validate label's syntax
@@ -663,33 +663,40 @@ export async function handle(state, action) {
       case 3:
         return "san";
       case 4:
-        return "shi";
+        return "yon";
       case 5:
         return "go";
       case 6:
         return "roku";
       case 7:
-        return "shichi";
+        return "nana";
+      case 8:
+        return "hachi";
+      case 9:
+        return "ku";
+      case 10:
+        return "juu";
+      case 11:
+        return "juuichi";
+      case 12:
+        return "juuni";
+      case 13:
+        return "juusan";
+      case 14:
+        return "juuyon";
+      case 15:
+        return "juugo";
       default:
         throw new ContractError(ERROR_INVALID_STRING_LENGTH);
     }
   }
 
   function _getMintingCost(username) {
-    switch (username.length) {
-      case 2:
-        return 1;
-      case 3:
-        return 0.1;
-      case 4:
-        return 0.01;
-      case 5:
-        return 0.001;
-      case 6:
-        return 0.0001;
-      case 7:
-        return 0.00001;
-    }
+    const len = username.length;
+    const UP = 10; // unit price = 10 DLT
+    const unitsCount = 16 - len; // (maxLen + 1) - toMintLen
+
+    return unitsCount * UP;
   }
 
   function _getLabel(username) {
@@ -814,7 +821,7 @@ export async function handle(state, action) {
   }
 
   function _validateLabelSwitching(label, address) {
-    const callerIndex = users.findIndex((usr) => usr.user === address);
+    const callerIndex = _validateUserExistence(address);
     const callerProfile = users[callerIndex];
 
     if (callerProfile["ownedLabels"].length < 2) {
@@ -894,7 +901,7 @@ export async function handle(state, action) {
   function _getSharePerRadicalOwner(label) {
     const radicalsOwners = users.filter((usr) =>
       usr["ownedLabels"].filter(
-        (labels) => label.includes(labels["label"]) && label.length < 6
+        (labels) => label.includes(labels["label"]) && label.length < 15
       )
     );
     const owners = {};
@@ -922,9 +929,17 @@ export async function handle(state, action) {
     const shares = {
       ni: [],
       san: [],
-      shi: [],
+      yon: [],
       go: [],
       roku: [],
+      nana: [],
+      hachi: [],
+      ku: [],
+      juu: [],
+      juuichi: [],
+      juuni: [],
+      juusan: [],
+      juuyon: [],
     };
 
     for (let user in owners) {
@@ -1003,7 +1018,7 @@ export async function handle(state, action) {
       case "san":
         return 3;
 
-      case "shi":
+      case "yon":
         return 4;
 
       case "go":
@@ -1011,6 +1026,30 @@ export async function handle(state, action) {
 
       case "roku":
         return 6;
+
+      case "nana":
+        return 7;
+
+      case "hachi":
+        return 8;
+
+      case "ku":
+        return 9;
+
+      case "juu":
+        return 10;
+
+      case "juuichi":
+        return 11;
+
+      case "juuni":
+        return 12;
+
+      case "juusan":
+        return 13;
+
+      case "juuyon":
+        return 14;
     }
   }
 }
