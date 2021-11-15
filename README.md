@@ -1,4 +1,10 @@
-
+<p align="center">
+  <a href="https://kyve.network">
+    <img src="./img/logo25.png" height="124">
+  </a>
+  <h3 align="center"><code>@decentdotland/ANS</code></h3>
+  <p align="center">🌐 the utimate web3 identity 🌐</p>
+</p>
    
 # Arweave Names Service
 
