@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://kyve.network">
+  <a href="https://decent.land">
     <img src="./img/logo25.png" height="124">
   </a>
   <h3 align="center"><code>@decentdotland/ANS</code></h3>
