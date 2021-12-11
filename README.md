@@ -46,14 +46,22 @@ ANS labels minting is based and limited using the arrangement without repitition
 Knowing that `p` is that arbitrary label string entered by the user that may be alphanumerical, and `n` is the total number of allowed characters which is 36 (26 characters from alphabetical characters and 10 characters from the allowed integers).
 For a better UX, labels of length equal to one are disallowed and cannot be minted, hence, that total number of labels that can ever exist is more than 43B labels. Breakdown:
 
-| label length  | label supply  |
-| :-----------: |:-------------:| 
-| 2             | 1260          | 
-| 3             | 42,840        | 
-| 4             | 1,413,720     |
-| 5             | 45,239,040    | 
-| 6             | 1,402,410,240 | 
-| 7             | 42,072,307,200|
+| label type  |  label length  | label supply  | 
+| :-----------: | :-----------: |:-------------:| 
+| ni            | 2             | 1260          | 
+| san           | 3             | 42,840        | 
+| yon           | 4             | 1,413,720     |
+| go            | 5             | 45,239,040    | 
+| roku          | 6             | 1,402,410,240 | 
+| nana          | 7             | 42,072,307,200|
+| hachi         | 8             | 1,220,096,908,800 |
+| ku            | 9             | 34,162,713,446,400 |
+| juu           | 10            | 922,393,263,052,800 |
+| juuichi       | 11            | 23,982,224,839,372,800 |
+| juuni         | 12            | 599,555,620,984,320,000 |
+| juusan        | 13            | 14,389,334,903,623,680,000 |
+| juuyon        | 14            | 330,954,702,783,344,640,000 |
+| juugo         | 15            | 7,281,003,461,233,582,080,000 |
 
 Label scarcity is determined by its length, the lower length it has, the more scarce it is. No renewal fees.
 
