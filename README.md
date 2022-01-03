@@ -10,6 +10,8 @@
 
 a Domain Names Service & De-Gravatar hybrid on the Arweave network
 
+**_the protocol has no token yet, any associated token's smart contract address is for testing purposes only_**
+
 # Motivation
 
 Using and adopting names service accross Arweave ecosystem has several benefits:
