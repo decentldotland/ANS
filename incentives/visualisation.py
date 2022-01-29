@@ -2,19 +2,18 @@ import math
 from matplotlib import pyplot as plt
 
 
-radicaLen = [2, 3, 4, 5, 6]
-labeLen = int(input("insert to-mint label's length(2-7): "))
+radicaLen = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+labeLen = int(input("insert to-mint label's length(2-15): "))
 usedRadicals = []
 percentagePerRadical = []
 
 percentageSum = 0
-for len in radicaLen:
+for len in range(radicaLen[0], radicaLen[-1]):
 
     if (len > labeLen) or (labeLen == len):
         continue
     usedRadicals.append(f"RL: {len}")
     percentage = (((len + labeLen) / (labeLen - len)) * 100 / math.e**len)
-    print(f"percentage for radical having len {len} is : {percentage} %\n")
     percentagePerRadical.append(percentage)
     percentageSum += percentage
 
