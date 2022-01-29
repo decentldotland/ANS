@@ -42,9 +42,9 @@ The formula computes the calculation for the `to_mint` label against every label
 
 The following diagrams visualize the calculation of profit-sharing percentage for radical's length as per the length of the `to_mint` label.
 
-<img src="./img/1-1.png">
+<img src="./img/len5.png">
 
-<img src="./img/1-3.png">
+<img src="./img/len12.png">
 
 You can find the full test [here](./img) . Notice how a RL with a character length of 2 shares the lower allocation because its frequency as a radical will be the highest, while the RL with a character length of 6 shares the highest allocation.
 
