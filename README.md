@@ -3,7 +3,7 @@
     <img src="./img/logo25.png" height="124">
   </a>
   <h3 align="center"><code>@decentdotland/ANS</code></h3>
-  <p align="center">🌐 the utimate web3 identity 🌐</p>
+  <p align="center">🌐 the ultimate web3 identity 🌐</p>
 </p>
    
 # Arweave Names Service
