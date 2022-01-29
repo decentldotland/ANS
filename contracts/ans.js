@@ -960,8 +960,11 @@ export async function handle(state, action) {
       const userShares = owners[user];
 
       for (let labelShare of Object.entries(userShares)) {
-        const data = [user, labelShare[1]];
-        shares[labelShare[0]].push(data);
+        const shareName = labelShare[0];
+        const userShares = labelShare[1];
+        const data = [user, userShares];
+        
+        shares[shareName].push(data);
       }
     }
 
@@ -1006,14 +1009,17 @@ export async function handle(state, action) {
         const rewardPerShare = totalRewardFromFee / totalShares;
 
         shares[share].forEach((user) => {
-          if (!balances[user[0]]) {
-            // if the user's account was setted up at transfer event
-            balances[user[0]] = 0;
-          }
+          const userAddress = user[0];
           const sharePerUser = user[1];
-          balances[user[0]] += rewardPerShare * sharePerUser;
+          
+          if (!balances[userAddress]) {
+            // if the user's account was setted up at transfer event
+            balances[userAddress] = 0;
+          }
+          
+          balances[userAddress] += rewardPerShare * sharePerUser;
           state.totalProfitSharing += rewardPerShare * sharePerUser;
-          __addUserEarning(user[0], rewardPerShare * sharePerUser);
+          __addUserEarning(userAddress, rewardPerShare * sharePerUser);
         });
       }
     }
