@@ -79,6 +79,10 @@ export async function handle(state, action) {
   const ERROR_INVALID_TWTR_USRNAME =
     "the given username is not a valid Twitter username";
   const ERROR_INVALID_CUSTOM_URL = "the given url is not valid";
+  const ERROR_REQUIRED_ARGUMENT = "the function has a missing argument";
+  const ERROR_INVALID_NUMBER_TYPE = "the number must be a positive integer";
+  const ERROR_NEGATIVE_INTEGER = "a negative number has been seeded";
+
 
   if (input.function === "setProfile") {
     const username = input.username;
@@ -376,7 +380,7 @@ export async function handle(state, action) {
   // CONTRACT OWNER PERMISSIONS
   if (input.function === "addUrlMimeType") {
     const type = input.type;
-
+  
     await _validateOnlyOwner();
     state.supportedUrlTypes.push(type);
 
@@ -395,7 +399,8 @@ export async function handle(state, action) {
 
     return { state };
   }
-
+  
+  // API FUNCTIONS
   if (input.function === "isOwned") {
     const label = input.label;
 
@@ -412,8 +417,6 @@ export async function handle(state, action) {
       },
     };
   }
-
-  // WDLT ACTIONS
 
   if (input.function === "getAddressOf") {
     const label = input.label;
@@ -434,7 +437,23 @@ export async function handle(state, action) {
       },
     };
   }
+  
+  if (input.function === "balanceOf") {
+    // the function return the DLT balance of an
+    // address that is deposited in the SWC (ANS)
+    const address = input.address;
 
+    _validateArweaveAddress(address);
+
+    const balance = balances[address] ? balances[address] : 0;
+
+    return {
+      result: {
+        balance: balance,
+      },
+    };
+  }
+  // WDLT FUNCTIONS
   if (input.function === "withdraw") {
     const qty = input.qty;
 
@@ -478,21 +497,7 @@ export async function handle(state, action) {
     return { state };
   }
 
-  if (input.function === "balanceOf") {
-    // the function return the DLT balance of an
-    // address that is deposited in the SWC (ANS)
-    const address = input.address;
 
-    _validateArweaveAddress(address);
-
-    const balance = balances[address] ? balances[address] : 0;
-
-    return {
-      result: {
-        balance: balance,
-      },
-    };
-  }
   // HELPER FUNCTIONS
   function _validateArweaveAddress(address) {
     if (typeof address !== "string" || address.length !== 43) {
@@ -693,7 +698,7 @@ export async function handle(state, action) {
 
   function _getMintingCost(username) {
     const len = username.length;
-    const UP = 10; // unit price = 10 DLT
+    const UP = 1; // unit price = 1 DLT
     const unitsCount = 16 - len; // (maxLen + 1) - toMintLen
 
     return unitsCount * UP;
@@ -712,19 +717,19 @@ export async function handle(state, action) {
 
   function _validateInteger(number, allowNull) {
     if (typeof allowNull === "undefined") {
-      throw new ContractError("ERROR_REQUIRED_ARGUMENT");
+      throw new ContractError(ERROR_REQUIRED_ARGUMENT);
     }
 
     if (!Number.isInteger(number)) {
-      throw new ContractError("ERROR_INVALID_NUMBER_TYPE");
+      throw new ContractError(ERROR_INVALID_NUMBER_TYPE);
     }
 
     if (allowNull) {
       if (number < 0) {
-        throw new ContractError("ERROR_NEGATIVE_INTEGER");
+        throw new ContractError(ERROR_NEGATIVE_INTEGER);
       }
     } else if (number <= 0) {
-      throw new ContractError("ERROR_INVALID_NUMBER_TYPE");
+      throw new ContractError(ERROR_INVALID_NUMBER_TYPE);
     }
   }
 
@@ -899,22 +904,30 @@ export async function handle(state, action) {
   }
 
   function _getSharePerRadicalOwner(label) {
-    const radicalsOwners = users.filter((usr) =>
-      usr["ownedLabels"].filter(
+    const radicalsOwners = {};
+
+    for (let usr of state.users) {
+      const radicalOwner = usr["ownedLabels"].filter(
         (labels) => label.includes(labels["label"]) && label.length < 15
-      )
-    );
+      );
+
+      if (radicalOwner.length >= 1) {
+        radicalsOwners[usr.user] = radicalOwner;
+      }
+    }
     const owners = {};
 
-    for (let owner of radicalsOwners) {
-      owners[owner.user] = {};
+    for (let owner in radicalsOwners) {
+      // owner === address
 
-      owner["ownedLabels"].forEach((labels) => {
+      owners[owner] = {};
+
+      radicalsOwners[owner].forEach((labels) => {
         if (label.includes(labels["label"])) {
-          if (!owners[owner.user][labels["scarcity"]]) {
-            owners[owner.user][labels["scarcity"]] = 1;
+          if (!owners[owner][labels["scarcity"]]) {
+            owners[owner][labels["scarcity"]] = 1;
           } else {
-            owners[owner.user][labels["scarcity"]] += 1;
+            owners[owner][labels["scarcity"]] += 1;
           }
         }
       });
@@ -922,6 +935,7 @@ export async function handle(state, action) {
 
     return owners;
   }
+
 
   function _allocatePerRadicalScarcity(label) {
     const owners = _getSharePerRadicalOwner(label);
@@ -965,7 +979,7 @@ export async function handle(state, action) {
 
       if (b < a && a !== b) {
         const radicalPercentage = (((a + b) / (a - b)) * 100) / Math.E ** b;
-        unsortedPercentages.push((radicalPercentage / 100) * mintingCost);
+        unsortedPercentages.push(radicalPercentage);
         foundRadicals.push(radical);
       }
     }
