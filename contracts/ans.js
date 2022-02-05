@@ -53,7 +53,7 @@ export async function handle(state, action) {
     "the function's caller is not the deposit TXID owner";
   const ERROR_INVALID_DEPOSIT_TX =
     "the provided deposit transaction is not valid";
-  const ERROR_MISSING_INPUT_PROPOERTY = "missing a reuired Input's key";
+  const ERROR_MISSING_INPUT_PROPOERTY = "missing a required Input's key";
   const ERROR_WRONG_FCP_FUNCTION = "deposit's function must be a 'transfer'";
   const ERROR_INVALID_TARGET =
     "deposit's TX target must be equal to this contract ID";
@@ -93,18 +93,20 @@ export async function handle(state, action) {
     let avatar = input.avatar;
     let github = input.github;
     let twitter = input.twitter;
+    let instagram = input.instagram;
     let customUrl = input.customUrl;
 
     const socialLinks = {};
 
     _validateArweaveAddress(caller);
-    _validateStringTypeLength(bio, 0, 75);
+    _validateStringTypeLength(bio, 0, 150);
     _validateStringTypeLength(username, 2, 15);
 
     const label = _validateUsername(username);
     const validatedNickname = _validateNickname(nickname);
     const labelScarcity = _getUsernameScarcity(label);
     const labelMintingCost = _getMintingCost(label);
+    const addressColor = _generateAddressColor(caller);
 
     if (availableLabels[labelScarcity] === 0) {
       throw new ContractError(ERROR_LABEL_SUPPLY_IS_ZERO);
@@ -114,12 +116,9 @@ export async function handle(state, action) {
       throw new ContractError(ERROR_CALLER_EXIST);
     }
 
-    if (avatar.length === 0) {
-      avatar = "78WdrVhNZ2i_KbimqcV4j-drX04HJr3E6UyD7xWc84Q";
-    } else {
-      await _validateAvatar(avatar);
+    if (avatar?.length) {
+      await _validateAvatar(avatar)
     }
-
     if (url.length > 0) {
       await _validateUrl(url);
     }
@@ -132,6 +131,11 @@ export async function handle(state, action) {
     if (twitter) {
       _validateTwitterUsername(twitter);
       socialLinks["twitter"] = twitter;
+    }
+    
+    if (instagram) {
+      _validateInstagramUsername(instagram);
+      socialLinks["instagram"] = instagram;
     }
 
     if (customUrl) {
@@ -159,6 +163,7 @@ export async function handle(state, action) {
       currentLabel: label,
       ownedLabels: [labelObject],
       nickname: nickname,
+      address_color: addressColor,
       bio: bio,
       url: url,
       avatar: avatar,
@@ -219,76 +224,58 @@ export async function handle(state, action) {
 
     return { state };
   }
-
-  if (input.function === "updateBio") {
-    const bio = input.bio;
-
-    const callerIndex = _validateUserExistence(caller);
-
-    _validateStringTypeLength(bio, 0, 75);
-    users[callerIndex]["bio"] = bio;
-    return { state };
-  }
-
-  if (input.function === "updateAvatar") {
-    const avatar = input.avatar;
-
-    const callerIndex = _validateUserExistence(caller);
-
-    await _validateAvatar(avatar);
-    users[callerIndex]["avatar"] = avatar;
-    return { state };
-  }
-
-  if (input.function === "updateUrl") {
-    const url = input.url;
-
-    const callerIndex = _validateUserExistence(caller);
-
-    await _validateUrl(url);
-    users[callerIndex]["url"] = url;
-    return { state };
-  }
   
-  if (input.function === "updateNickname") {
-    const nickname = input.nickname;
-
+  if (input.function === "updateProfileMetadata") {
+    if (Object.keys(input).length <= 1) {
+      throw new ContractError(ERROR_MISSING_INPUT_PROPOERTY);
+    }
     const callerIndex = _validateUserExistence(caller);
 
-    const validatedNickname = _validateNickname(nickname);
-    users[callerIndex]["nickname"] = nickname;
+    if (input.bio) {
+      _validateStringTypeLength(input.bio, 0, 150);
+      users[callerIndex]["bio"] = input.bio;
+    }
+
+    if (input.avatar) {
+      await _validateAvatar(input.avatar);
+      users[callerIndex]["avatar"] = input.avatar;
+    }
+
+    if (input.nickname) {
+      const validatedNickname = _validateNickname(input.nickname);
+      users[callerIndex]["nickname"] = input.nickname;
+    }
+
+    if (input.github) {
+      _validateGithubUsername(input.github);
+      users[callerIndex]["links"]["github"] = input.github;
+    }
+
+    if (input.instagram) {
+      _validateInstagramUsername(input.instagram);
+      users[callerIndex]["links"]["instagram"] = input.instagram;
+    }
+
+    if (input.twitter) {
+      _validateTwitterUsername(input.twitter);
+      users[callerIndex]["links"]["twitter"] = input.twitter;
+    }
+
+    if (input.url) {
+      // Arweave TXID with a supported MIME type
+      await _validateUrl(input.url);
+      users[callerIndex]["url"] = input.url;
+    }
+
+    if (input.customUrl) {
+      // custom url (string)
+      _validateCustomUrl(input.customUrl);
+      users[callerIndex]["links"]["customUrl"] = input.customUrl;
+    }
+
     return { state };
   }
 
-  if (input.function === "updateGithub") {
-    const github = input.github;
-
-    const callerIndex = _validateUserExistence(caller);
-    _validateGithubUsername(github);
-    users[callerIndex]["links"]["github"] = github;
-
-    return { state };
-  }
-
-  if (input.function === "updateTwitter") {
-    const twitter = input.twitter;
-
-    const callerIndex = _validateUserExistence(caller);
-    _validateTwitterUsername(twitter);
-    users[callerIndex]["links"]["twitter"] = twitter;
-
-    return { state };
-  }
-
-  if (input.function === "updateCustomUrl") {
-    const customUrl = input.customUrl;
-
-    const callerIndex = _validateUserExistence(caller);
-    _validateCustomUrl(customUrl);
-    users[callerIndex]["links"]["customUrl"] = customUrl;
-
-    return { state };
-  }
 
   if (input.function === "abdictOwnership") {
     const label = input.label;
@@ -314,6 +301,7 @@ export async function handle(state, action) {
     _validateArweaveAddress(target);
 
     const desiredLabel = _validateUsername(label, "read");
+    const targetColor = _generateAddressColor(target);
     const { ownedIn, callerIndex } = _getTransferablityStatus(
       desiredLabel,
       caller,
@@ -331,9 +319,10 @@ export async function handle(state, action) {
         user: target,
         currentLabel: "",
         ownedLabels: [],
-        nickname: `Arweaver#${SmartWeave.block.height}`,
+        nickname: `arweaver#${SmartWeave.block.height}`,
+        address_color: targetColor,
         bio: "account's metadata auto-generated at a transfer event",
-        avatar: "78WdrVhNZ2i_KbimqcV4j-drX04HJr3E6UyD7xWc84Q",
+        avatar: "",
         links: {}
       };
     }
@@ -453,6 +442,17 @@ export async function handle(state, action) {
       },
     };
   }
+  
+  if (input.function === "usersCount") {
+    const count = state.users.length;
+
+    return {
+      result: {
+        count: count,
+      },
+    };
+  }
+
   // WDLT FUNCTIONS
   if (input.function === "withdraw") {
     const qty = input.qty;
@@ -630,6 +630,18 @@ export async function handle(state, action) {
       throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
     }
     const regex = /^@?([a-zA-Z0-9_]{1,15})$/i;
+    const test = regex.test(username);
+
+    if (!test) {
+      throw new ContractError(ERROR_INVALID_TWTR_USRNAME);
+    }
+  }
+  
+  function _validateInstagramUsername(username) {
+    if (typeof username !== "string") {
+      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
+    }
+    const regex = /^([a-zA-Z0-9_]{1,30})$/i;
     const test = regex.test(username);
 
     if (!test) {
@@ -969,6 +981,20 @@ export async function handle(state, action) {
     }
 
     return shares;
+  }
+  
+  function _generateAddressColor(address) {
+    let hash = 0;
+    for (let i = 0; i < address.length; i++) {
+      hash = address.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    let color = "#";
+    for (let i = 0; i < 3; i++) {
+      const value = (hash >> (i * 8)) & 0xff;
+      color += ("00" + value.toString(16)).substr(-2);
+    }
+
+    return color;
   }
 
   function _por(toMintLable, mintingCost) {
