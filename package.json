@@ -2,7 +2,7 @@
   "name": "ans-arweave",
   "version": "0.0.0",
   "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
-  "main": "lib/api.js",
+  "main": "server/api.js",
   "scripts": {
     "start": "node server/api.js"
   },
