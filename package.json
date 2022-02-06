@@ -4,7 +4,8 @@
   "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
   "main": "server/api.js",
   "scripts": {
-    "start": "node server/api.js"
+    "start": "node server/api.js",
+    "space": "node space/index.js"
   },
   "repository": {
     "type": "git",
@@ -23,7 +24,12 @@
   },
   "dependencies": {
     "arweave": "^1.10.16",
+    "ejs": "^3.1.6",
     "express": "^4.17.1",
+    "express-subdomain": "^1.0.5",
+    "koa": "^2.13.4",
+    "koa-ejs": "^4.3.0",
+    "koa-router": "^10.1.1",
     "prettier": "^2.4.1",
     "redstone-smartweave": "^0.3.10-alpha.12",
     "secure-env": "^1.2.0"
