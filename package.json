@@ -4,7 +4,7 @@
   "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
   "main": "lib/api.js",
   "scripts": {
-    "start": "node lib/api.js"
+    "start": "node server/api.js"
   },
   "repository": {
     "type": "git",
