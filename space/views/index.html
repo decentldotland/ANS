@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>ANS</title>
+        <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        />
+
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
+        <meta name="referrer" content="no-referrer-when-downgrade">
+        <title>ANS Identity</title>
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+                <h1 class="display-4"><%= profile.currentLabel %>.ar</h1>
+                <p class="lead">
+                    the web3 identity of
+                    <a href="https://viewblock.io/arweave/address/<%- profile.user -%>"><%= profile.user %></a>
+                </p>
+            </div>
+
+            <div class="list-group">
+                <div class="list-group-item">
+                    <p class="mb-1">
+                        <strong>nickname:</strong>
+                        <%= profile.nickname %> 
+                    </p>
+                    <p class="mb-1">
+                        <strong>Bio:</strong>
+                        <%= profile.bio %> 
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
