@@ -90,6 +90,18 @@ ANS-labels are Profit Sharing Domains (PSD) for having the following features:
 - The first in-contract, on-chain ***profit sharing*** mechanism through the [PoR](https://github.com/decentldotland/ANS/tree/main/incentives) incentives model.
 - ***Domain*** Name Service: address resolving & DeGravatar.
 
+## Contributing
+
+If you have a suggestion that would make this protocol or the [API](./server) better, please fork the repository and create a pull request.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/xyz`)
+3. Commit your Changes (`git commit -m 'feat: abc-xyz'`)
+4. Push to the Branch (`git push origin feature/xyz`)
+5. Open a Pull Request
+
+Contributions are **greatly appreciated** !
+
 ## License
 The project is licensed under the [MIT](https://github.com/decentldotland/ANS/blob/main/LICENSE) license.
 
