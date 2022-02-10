@@ -149,6 +149,8 @@ export async function handle(state, action) {
 
     if (label.length > 2) {
       _por(label, labelMintingCost);
+    } else {
+      _addMintingCostToTreasury(labelMintingCost);
     }
 
     const labelObject = {
@@ -206,6 +208,8 @@ export async function handle(state, action) {
 
     if (label.length > 2 && label.length < 15) {
       _por(label, labelMintingCost);
+    } else {
+      _addMintingCostToTreasury(labelMintingCost);
     }
 
     users[callerIndex]["ownedLabels"].push(labelObject);
@@ -996,12 +1000,21 @@ export async function handle(state, action) {
 
     return color;
   }
+  
+  function _addMintingCostToTreasury(amount) {
+    if (!balances[SmartWeave.contract.owner]) {
+      balances[SmartWeave.contract.owner] = 0;
+    }
+
+    balances[SmartWeave.contract.owner] += +amount;
+  }
 
   function _por(toMintLable, mintingCost) {
     const a = toMintLable.length;
     const unsortedPercentages = [];
     const foundRadicals = [];
     const shares = _allocatePerRadicalScarcity(toMintLable);
+    let totalPorSharedPercentage = 0;
 
     for (let radical in shares) {
       const b = __getRadicalLength(radical); // radical length
@@ -1009,6 +1022,7 @@ export async function handle(state, action) {
       if (b < a && a !== b) {
         const radicalPercentage = (((a + b) / (a - b)) * 100) / Math.E ** b;
         unsortedPercentages.push(radicalPercentage);
+        totalPorSharedPercentage += radicalPercentage;
         foundRadicals.push(radical);
       }
     }
@@ -1018,15 +1032,24 @@ export async function handle(state, action) {
       (percentage, index) => [foundRadicals[index], percentage]
     );
     const finalDistribution = Object.fromEntries(scarcityPercentagesArray);
+    // treasury amount is the fixed non-distributed percentage per minted
+    // label of 2 < length < 15
+    // e.g. in this case https://github.com/decentldotland/ANS/blob/main/incentives/img/len10.png
+    // treasury's allocation is (100e^-2 - 37.8e^-2) * mintingCost 
+    const treasuryAmount = (100 - totalPorSharedPercentage) / 100 * mintingCost;
+    _addMintingCostToTreasury(treasuryAmount);
 
-    return __distributeProfitSharing(finalDistribution, shares, mintingCost);
+    return __distributeProfitSharing(finalDistribution, shares, mintingCost, treasuryAmount);
   }
 
-  function __distributeProfitSharing(finalDistribution, shares, mintingCost) {
+  function __distributeProfitSharing(finalDistribution, shares, mintingCost, treasuryAmount) {
+    // this variable represents the theoretical fraction of minting fee
+    // allocated for distribution as per PoR (even if there are no roots)
+    let rootsAllocatedDistribution = mintingCost - treasuryAmount;
     for (let share in shares) {
       const sharePerScarcity = shares[share].flat();
 
-      if (sharePerScarcity.length >= 1) {
+      if (sharePerScarcity.length >= 1) { // equal to 'if roots exist in this label type'
         const totalShares = sharePerScarcity
           .filter((element) => typeof element === "number")
           .reduce((a, b) => a + b, 0);
@@ -1039,15 +1062,24 @@ export async function handle(state, action) {
           const sharePerUser = user[1];
           
           if (!balances[userAddress]) {
-            // if the user's account was setted up at transfer event
+            // if the user's account was setted up at a previous label transfer event
             balances[userAddress] = 0;
           }
-          
+          // update the balance
           balances[userAddress] += rewardPerShare * sharePerUser;
           state.totalProfitSharing += rewardPerShare * sharePerUser;
+          // deduct the distributed amount from the theoretical 
+          // allocation as a root was found & rewarded
+          rootsAllocatedDistribution -= rewardPerShare *  sharePerUser;
+          // adds stats record, does not update the balance
           __addUserEarning(userAddress, rewardPerShare * sharePerUser);
         });
       }
+    }
+    // non-distributed shares from the theoretical allocated rewards are added back
+    // to the treasury (if it's not 100% distributed ; roots found in all label types)
+    if (rootsAllocatedDistribution > 0) {
+      _addMintingCostToTreasury(rootsAllocatedDistribution);
     }
   }
 
