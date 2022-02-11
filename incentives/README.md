@@ -25,8 +25,8 @@ The ANS protocol implements the first in-contract profit-sharing mechanism.
 
 ### PoR:
 
-- Profit-sharing percentage is calculated on every minting attempt for labels between 3 and 7 characters in length (san to shichi scarcity).
-- Beneficiaries are any user that owns one or more label between 2 to 6 characters in length (ni to roku scarcity).
+- Profit-sharing percentage is calculated on every minting attempt for labels between 3 and 15 characters in length (san to juugo scarcity).
+- Beneficiaries (Radicals owners) are any user that owns one or more label (RL) between 2 to 14 characters in length (ni to juuyon scarcity).
 - The profit-sharing percentage is set for every label type (scarcity). If there are multiple radicals for the same label type, then the allocated percentage of the label type is distributed on pro-rata basis amongst the same RL scarcity owners.
 - The PoR shares profit only with minted RL with a character length lower than the `to_mint` length ( `radical.length < to_mint.length ` ).
 - The distributed percentage is deducted from the pre-defined minting fee.
@@ -46,8 +46,7 @@ The following diagrams visualize the calculation of profit-sharing percentage fo
 
 <img src="./img/len12.png">
 
-You can find the full test [here](./img) . Notice how a RL with a character length of 2 shares the lower allocation because its frequency as a radical will be the highest, while the RL with a character length of 6 shares the highest allocation.
-
+You can find the rest of the tests [here](./img).
 ## Cashback
 The current PoR's model does not exclude self-owned radicals while calculating profit sharing at new label `mint` event. Thus, owners can also get a "cashback" for minting a new label with an pre-minting self-owned radical.
 
