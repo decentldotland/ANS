@@ -10,7 +10,7 @@ export async function handle(state, action) {
   const deposits = state.deposits;
   const withdrawals = state.withdrawals;
   // CONSTANTS
-  const WDLT = "FdY68iYqTvA40U34aXQBBYseGmIUmLV-u57bT7LZWm0";
+  const WDLT = "";
   //SMARTWEAVE API
   const blockHeight = SmartWeave.block.height;
 
@@ -924,7 +924,7 @@ export async function handle(state, action) {
 
     for (let usr of state.users) {
       const radicalOwner = usr["ownedLabels"].filter(
-        (labels) => label.includes(labels["label"]) && label.length < 15
+        (labels) => label.includes(labels["label"]) && label.length < 16
       );
 
       if (radicalOwner.length >= 1) {
@@ -1002,7 +1002,7 @@ export async function handle(state, action) {
   }
   
   function _addMintingCostToTreasury(amount) {
-    if (!balances[SmartWeave.contract.owner]) {
+    if (!(SmartWeave.contract.owner in state.balances)) {
       balances[SmartWeave.contract.owner] = 0;
     }
 
