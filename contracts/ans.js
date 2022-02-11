@@ -206,7 +206,7 @@ export async function handle(state, action) {
     availableLabels[labelScarcity] -= 1;
     _checkAndSubstractMintingCost(labelMintingCost, caller);
 
-    if (label.length > 2 && label.length < 15) {
+    if (label.length > 2) {
       _por(label, labelMintingCost);
     } else {
       _addMintingCostToTreasury(labelMintingCost);
