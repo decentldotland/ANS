@@ -1161,7 +1161,17 @@ export async function handle(state, action) {
   
   function _validateSubdomain(userIndex, subdomain) {
     const normalizedSubdomain = subdomain.toLowerCase().trim().normalize("NFKC");
-    _validateStringTypeLength(normalizedSubdomain, 2, 25);
+    _validateStringTypeLength(normalizedSubdomain, 2, 30);
+
+    const stringCharcodes = normalizedSubdomain
+      .split("")
+      .map((char) => char.charCodeAt(0));
+
+    for (let charCode of stringCharcodes) {
+      if (!allowedCharCodes.includes(charCode)) {
+        throw new ContractError(ERROR_INVALID_CHARCODE);
+      }
+    }
 
     const userFreeSubdomains = state.users[userIndex].freeSubdomains;
     const userSubdomains = state.users[userIndex].subdomains;
