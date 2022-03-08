@@ -82,6 +82,8 @@ export async function handle(state, action) {
   const ERROR_REQUIRED_ARGUMENT = "the function has a missing argument";
   const ERROR_INVALID_NUMBER_TYPE = "the number must be a positive integer";
   const ERROR_NEGATIVE_INTEGER = "a negative number has been seeded";
+  const ERROR_NO_SUBDOMAINS_AVAILABLE = "you have reached the free-subdomains limit";
+  const ERROR_INVALID_ARWEAVE_TXID = "an invalid TXID has been passed";
 
 
   if (input.function === "setProfile") {
@@ -171,6 +173,8 @@ export async function handle(state, action) {
       avatar: avatar,
       earnings: 0,
       links: socialLinks,
+      subdomains: {},
+      freeSubdomains: 3,
     });
 
     return { state };
@@ -327,7 +331,9 @@ export async function handle(state, action) {
         address_color: targetColor,
         bio: "account's metadata auto-generated at a transfer event",
         avatar: "",
-        links: {}
+        links: {},
+        subdomains: {},
+        freeSubdomains: 3,
       };
     }
 
@@ -368,6 +374,28 @@ export async function handle(state, action) {
 
       return { state };
     }
+  }
+  
+   if (input.function === "setSubdomain") {
+    // testnet implementation:
+    // the subdomain is bound to the
+    // any `currentLabel`. in other words
+    // the subdomain is bound to the
+    // label that points to the user's address
+    // at any time
+    const subdomain = input.subdomain;
+    const value = input.value;
+
+    const callerIndex = _validateUserExistence(caller);
+    const normalizedSubdomain = _validateSubdomain(callerIndex, subdomain);
+
+    await _validateSubdomainValue(value);
+    // add subdomain OR update it's value if it exist already
+    state.users[callerIndex]["subdomains"][normalizedSubdomain] = value;
+    // substract a free subdomain
+    state.users[callerIndex].freeSubdomains -= 1;
+
+    return { state };
   }
 
   // CONTRACT OWNER PERMISSIONS
@@ -1130,4 +1158,27 @@ export async function handle(state, action) {
         return 14;
     }
   }
+  
+  function _validateSubdomain(userIndex, subdomain) {
+    const normalizedSubdomain = subdomain.toLowerCase().trim().normalize("NFKC");
+    _validateStringTypeLength(normalizedSubdomain, 2, 25);
+
+    const userFreeSubdomains = state.users[userIndex].freeSubdomains;
+    const userSubdomains = state.users[userIndex].subdomains;
+
+    if (userFreeSubdomains === 0) {
+      throw new ContractError(ERROR_NO_SUBDOMAINS_AVAILABLE);
+    }
+
+    return normalizedSubdomain;
+  }
+
+  async function _validateSubdomainValue(txid) {
+    try {
+      await SmartWeave.unsafeClient.transactions.get(txid);
+    } catch (err) {
+      return new ContractError(ERROR_INVALID_ARWEAVE_TXID);
+    }
+  }
+
 }
