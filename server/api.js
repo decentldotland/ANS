@@ -51,7 +51,8 @@ async function profile(AddyLabel) {
 
   switch (argType) {
     case "label":
-      const label = state.users.find((usr) => usr.currentLabel === AddyLabel);
+      const normalizedLabel = AddyLabel.toLowerCase().normalize("NFKC");
+      const label = state.users.find((usr) => usr.ownedLabels.find(domain => domain["label"] === normalizedLabel));
       if (!label) {
         return { result: undefined };
       }
