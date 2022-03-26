@@ -67,20 +67,6 @@ For a better UX, labels of length equal to one are disallowed and cannot be mint
 
 Label scarcity is determined by its length, the lower length it has, the more scarce it is. No renewal fees.
 
-## Current implemented minting models:
-This section discusses the possible option to be adopted for the label minting process
--  Model Alpha: minting using $DLT
-
-
-## Labels marketplace
-
-
-Labels may be a new asset with new standars not compatible with PSTs or atomic NFTs standards, thus, that requires building a marketplace dedicted for ANS labels.
-
-### characteristics
-- main currency: `$DLT`
-- create an economical experience and new opportunities
-- incentives for `$DLT` holders through marketplace earned fees
 
 ## Label Asset Type
 ANS labels are digital properties fully owned and managed by the `user` (aka label's owner post-minting). ANS spec introduces a new asset / tokenized mechanism to the Arweave ecosystem that applies the profit sharing concept introduced in [PSCs](https://coinmarketcap.com/alexandria/article/profit-sharing-communities-a-deep-dive-by-arweave) and [PSTs](https://arweave.medium.com/profit-sharing-tokens-a-new-incentivization-mechanism-for-an-open-web-1f2532411d6e).
@@ -89,6 +75,9 @@ ANS-labels are Profit Sharing Domains (PSD) for having the following features:
 - Basic ***token*** functionalities: ownership, transferability, & trade-ability.
 - The first in-contract, on-chain ***profit sharing*** mechanism through the [PoR](https://github.com/decentldotland/ANS/tree/main/incentives) incentives model.
 - ***Domain*** Name Service: address resolving & DeGravatar.
+
+## Genesis Launch
+ANS testnet has been launched distributing domains for hundred of addresses during the Genesis phase. Learn more about the airdrop [here.](https://github.com/decentldotland/ANS-Testnet-Airdrop)
 
 ## Contributing
 
