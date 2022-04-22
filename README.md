@@ -79,6 +79,9 @@ ANS-labels are Profit Sharing Domains (PSD) for having the following features:
 ## Genesis Launch
 ANS testnet has been launched distributing domains for hundred of addresses during the Genesis phase. Learn more about the airdrop [here.](https://github.com/decentldotland/ANS-Testnet-Airdrop)
 
+## Interacting With ANS Contract
+The [docs.decent.land](https://docs.decent.land) contains a set of guide and documentations explaining how to interact with the ANS smart contract.
+
 ## Contributing
 
 If you have a suggestion that would make this protocol or the [API](./server) better, please fork the repository and create a pull request.
