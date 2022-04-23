@@ -82,6 +82,9 @@ ANS testnet has been launched distributing domains for hundred of addresses duri
 ## Interacting With ANS Contract
 The [docs.decent.land](https://docs.decent.land) contains a set of guide and documentations explaining how to interact with the ANS smart contract.
 
+## ANS Metrics API
+The [ans-stats](https://github.com/decentldotland/ans-stats) repository is an API for ANS data and statistics. API endpoint: [ans-stats.decent.land](https://ans-stats.decent.land)
+
 ## Contributing
 
 If you have a suggestion that would make this protocol or the [API](./server) better, please fork the repository and create a pull request.
