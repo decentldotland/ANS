@@ -1,31 +1,18 @@
-// imports
-const express = require("express");
-const { SmartWeaveNodeFactory } = require("redstone-smartweave");
-const Arweave = require("arweave");
-const { pk } = require("./exports/wallet.js");
-const { ANS_CONTRACT_ID } = require("./exports/contracts.js");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import { smartweave } from "./utils/arweave.js";
+import { pk } from "./utils/wallet.js";
+import { ANS_CONTRACT_ID } from "./utils/contracts.js";
 
-// Configs
-const arweave = Arweave.init({
-  host: "arweave.net",
-  protocol: "https",
-  port: 443,
-  timeout: 20000,
-  logging: false,
-});
-
-const smartweave = SmartWeaveNodeFactory.memCached(arweave);
 const app = express();
 const port = process.env.PORT || 3000;
+const jwk = JSON.parse(pk);
 
 app.use(
   cors({
     origin: "*",
   })
 );
-
-const jwk = JSON.parse(pk);
 
 // functions
 async function addressOf(label) {
