@@ -4,6 +4,7 @@ const { SmartWeaveNodeFactory } = require("redstone-smartweave");
 const Arweave = require("arweave");
 const { pk } = require("./exports/wallet.js");
 const { ANS_CONTRACT_ID } = require("./exports/contracts.js");
+const cors = require("cors");
 
 // Configs
 const arweave = Arweave.init({
@@ -17,6 +18,12 @@ const arweave = Arweave.init({
 const smartweave = SmartWeaveNodeFactory.memCached(arweave);
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 const jwk = JSON.parse(pk);
 
@@ -52,7 +59,9 @@ async function profile(AddyLabel) {
   switch (argType) {
     case "label":
       const normalizedLabel = AddyLabel.toLowerCase().normalize("NFKC");
-      const label = state.users.find((usr) => usr.ownedLabels.find(domain => domain["label"] === normalizedLabel));
+      const label = state.users.find((usr) =>
+        usr.ownedLabels.find((domain) => domain["label"] === normalizedLabel)
+      );
       if (!label) {
         return { result: undefined };
       }
@@ -125,7 +134,7 @@ async function usersCount() {
   const contract = smartweave.contract(ANS_CONTRACT_ID).connect(jwk);
 
   const response = await contract.viewState({
-    function: "usersCount"
+    function: "usersCount",
   });
 
   if (response.type !== "ok") {
@@ -151,7 +160,7 @@ function _validateArweaveAddress(address) {
 // API ENDPOINTS
 app.get("/users", async (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  const count = await usersCount()
+  const count = await usersCount();
 
   res.send(count);
 });
