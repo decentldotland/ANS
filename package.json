@@ -1,6 +1,6 @@
 {
   "name": "ans-arweave",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
   "main": "server/api.js",
   "scripts": {
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "arweave": "^1.10.16",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "prettier": "^2.4.1",
     "redstone-smartweave": "^0.3.10-alpha.12",
