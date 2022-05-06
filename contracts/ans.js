@@ -1,3 +1,24 @@
+/**
+ * 
+ * 
+ * 
+ * 
+ * 
+ *                               ░█████╗░███╗░░██╗░██████╗
+ *                               ██╔══██╗████╗░██║██╔════╝
+ *                               ███████║██╔██╗██║╚█████╗░
+ *                               ██╔══██║██║╚████║░╚═══██╗
+ *                               ██║░░██║██║░╚███║██████╔╝
+ *                               ╚═╝░░╚═╝╚═╝░░╚══╝╚═════╝░
+ * 
+ *                                 Arweave Name Service 
+ * 
+ * @author charmful0x
+ * @website https://ar.page
+ * 
+ **/
+
+
 export async function handle(state, action) {
   const input = action.input;
   const caller = action.caller;
