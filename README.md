@@ -85,6 +85,9 @@ The [docs.decent.land](https://docs.decent.land) contains a set of guide and doc
 ## ANS Metrics API
 The [ans-stats](https://github.com/decentldotland/ans-stats) repository is an API for ANS data and statistics. API endpoint: [ans-stats.decent.land](https://ans-stats.decent.land)
 
+## ANS-FOR-ALL
+`ans-for-all` is a drop in module to utilize the ANS protocol in React apps. Check [repo](https://github.com/nanofuxion/ans-for-all)
+
 ## Contributing
 
 If you have a suggestion that would make this protocol or the [API](./server) better, please fork the repository and create a pull request.
