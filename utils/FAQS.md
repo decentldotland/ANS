@@ -1,11 +1,12 @@
 # ar.page.faq
 
 ## What is ANS?
-Arweave Names Service combines a decentralized domains naming service and a decentralized Gravatar-like protocol into a new protocol called ANS. [Learn more about ANS](https://github.com/decentldotland/ANS).
+
+Arweave Names Service (ANS) is a hybrid protocol of social metadata and a web3 Domain Names Service (DNS), built on top of the Arweave network. ANS is the first identity layer of the permaweb, integrated with ViewBlock.io
 
 ## What is ar.page?
 
-[ar.page](https://ar.page) is a web app that renders your ANS metadata in a page displaying your profile's data, and aggregates a feed of your activities over the Arweave network (Ardrive, Koii, Permacast, etc).
+[ar.page](https://ar.page) is a web app that renders your ANS metadata in a page displaying your profile's data, and aggregates a feed of your activities over the Arweave network (ArDrive, Koii, Permacast, etc).
 
 ## How can I access my profile?
 simply head to `your_domain.ar.page`!
