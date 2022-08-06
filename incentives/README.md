@@ -21,7 +21,7 @@ The ANS protocol implements the first in-contract profit-sharing mechanism.
 
 ### workflow:
 
-<img src="./img/incentives-workflow.png">
+<img src="./img/incentives-workflow-2.png">
 
 ### PoR:
 
