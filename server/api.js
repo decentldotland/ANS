@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { smartweave } from "./utils/arweave.js";
+import { smartweave, getBlockTimestampById } from "./utils/arweave.js";
 import { pk } from "./utils/wallet.js";
 import { ANS_CONTRACT_ID } from "./utils/contracts.js";
 
@@ -53,6 +53,10 @@ async function profile(AddyLabel) {
         return { result: undefined };
       }
 
+      label.timestamp = await getBlockTimestampById(
+        label.ownedLabels[0]?.acquisationBlock
+      );
+
       return label;
 
     case "address":
@@ -61,6 +65,9 @@ async function profile(AddyLabel) {
         return { result: undefined };
       }
 
+      address.timestamp = await getBlockTimestampById(
+        label.ownedLabels[0]?.acquisationBlock
+      );
       return address;
 
     default:
