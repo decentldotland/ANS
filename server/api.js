@@ -66,7 +66,7 @@ async function profile(AddyLabel) {
       }
 
       address.timestamp = await getBlockTimestampById(
-        label.ownedLabels[0]?.acquisationBlock
+        address.ownedLabels[0]?.acquisationBlock
       );
       return address;
 
