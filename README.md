@@ -41,29 +41,27 @@ The usage of the NFKC algorithm allows to reduce the visual security issues like
 - Punnycode and Script spoofing
 
 ## Available Labels
-ANS labels minting is based and limited using the arrangement without repitition of the conditional probability
- 
-<img src="https://render.githubusercontent.com/render/math?math=%5CHuge%20A_n%5Ep%20%3D%20%7Bn!%7D%2F%7B(n-p)!%7D">
+ANS labels minting is based and limited using the permutation with repetition of the conditional probability
 
 Knowing that `p` is that arbitrary label string entered by the user that may be alphanumerical, and `n` is the total number of allowed characters which is 36 (26 characters from alphabetical characters and 10 characters from the allowed integers).
 For a better UX, labels of length equal to one are disallowed and cannot be minted, hence, that total number of labels that can ever exist is more than 43B labels. Breakdown:
 
 | label type  |  label length  | label supply  | 
 | :-----------: | :-----------: |:-------------:| 
-| ni            | 2             | 1260          | 
-| san           | 3             | 42,840        | 
-| yon           | 4             | 1,413,720     |
-| go            | 5             | 45,239,040    | 
-| roku          | 6             | 1,402,410,240 | 
-| nana          | 7             | 42,072,307,200|
-| hachi         | 8             | 1,220,096,908,800 |
-| ku            | 9             | 34,162,713,446,400 |
-| juu           | 10            | 922,393,263,052,800 |
-| juuichi       | 11            | 23,982,224,839,372,800 |
-| juuni         | 12            | 599,555,620,984,320,000 |
-| juusan        | 13            | 14,389,334,903,623,680,000 |
-| juuyon        | 14            | 330,954,702,783,344,640,000 |
-| juugo         | 15            | 7,281,003,461,233,582,080,000 |
+| ni            | 2             | 1,296          | 
+| san           | 3             | 46,656        | 
+| yon           | 4             | 1,679,616     |
+| go            | 5             | 60,466,176    | 
+| roku          | 6             | 2,176,782,336 | 
+| nana          | 7             | 78,364,164,096|
+| hachi         | 8             | 2,821,109,907,456 |
+| ku            | 9             | 101,559,956,668,416 |
+| juu           | 10            | 3,656,158,440,062,976 |
+| juuichi       | 11            | 131,621,703,842,267,136 |
+| juuni         | 12            | 4,738,381,338,321,616,896 |
+| juusan        | 13            | 170,581,728,179,578,208,256 |
+| juuyon        | 14            | 6,140,942,214,464,815,497,216 |
+| juugo         | 15            | 221,073,919,720,733,357,899,776 |
 
 Label scarcity is determined by its length, the lower length it has, the more scarce it is. No renewal fees.
 
