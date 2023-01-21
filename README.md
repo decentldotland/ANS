@@ -1,14 +1,12 @@
 <p align="center">
   <a href="https://decent.land">
-    <img src="./img/logo25.png" height="124">
+    <img src="./img/new-logo.png" height="200">
   </a>
-  <h3 align="center"><code>@decentdotland/ANS</code></h3>
-  <p align="center">🌐 the ultimate web3 identity 🌐</p>
+  <h3 align="center"><code>@decentldotland/ANS</code></h3>
+  <p align="center">The Universal User Identifier ID for Arweave Network</p>
 </p>
    
-# Arweave Names Service
-
-a Domain Names Service & De-Gravatar hybrid on the Arweave network
+# Arweave Name Service
 
 **_the protocol has no token yet, any associated token's smart contract address is for testing purposes only_**
 
