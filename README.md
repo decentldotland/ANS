@@ -14,10 +14,10 @@ a Domain Names Service & De-Gravatar hybrid on the Arweave network
 
 # Motivation
 
-Using and adopting names service accross Arweave ecosystem has several benefits:
-- faciliate of sharing addresses and sending AR/PSTs
+Using and adopting names service across Arweave ecosystem has several benefits:
+- facilitate sharing addresses and sending AR/PSTs
 - create an economic cycle through domains financial activities (trading)
-- the ability to be used as social profiles contructors in Arweave based social networks (e.g. decent.land users)
+- the ability to be used as social profiles constructors in Arweave based social networks (e.g. decent.land users)
 - a decentralized gravatar-like use-case
 
 
@@ -25,7 +25,7 @@ Using and adopting names service accross Arweave ecosystem has several benefits:
 
 - label: equivalent to domain's name in DNS, such as **"decent"** in decent.ar
 - user: the controller of the label
-- name: full ANS identifier such as "decent.ar" (label and 'ar' TLD sepperated by a dot)
+- name: full ANS identifier such as "decent.ar" (label and 'ar' TLD separated by a dot)
 
 ## Label's string handling
 
@@ -41,7 +41,7 @@ The usage of the NFKC algorithm allows to reduce the visual security issues like
 - Punnycode and Script spoofing
 
 ## Available Labels
-ANS labels minting is based and limited using the arrangement without repitition of the conditional probability
+ANS labels minting is based and limited using the arrangement without repetition of the conditional probability
  
 <img src="https://render.githubusercontent.com/render/math?math=%5CHuge%20A_n%5Ep%20%3D%20%7Bn!%7D%2F%7B(n-p)!%7D">
 
