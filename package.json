@@ -1,8 +1,8 @@
 {
-  "name": "ans-arweave",
-  "version": "0.0.5",
+  "name": "ans",
+  "version": "0.0.6",
   "type": "module",
-  "description": "a Domain Names Service & De-Gravatar hybrid on the Arweave network",
+  "description": "The Domain Name Service of Arweave network",
   "main": "server/api.js",
   "scripts": {
     "start": "node server/api.js"
