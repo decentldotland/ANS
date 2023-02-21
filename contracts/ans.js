@@ -1,1215 +1,939 @@
-/**
- * 
- * 
- * 
- * 
- * 
- *                               ░█████╗░███╗░░██╗░██████╗
- *                               ██╔══██╗████╗░██║██╔════╝
- *                               ███████║██╔██╗██║╚█████╗░
- *                               ██╔══██║██║╚████║░╚═══██╗
- *                               ██║░░██║██║░╚███║██████╔╝
- *                               ╚═╝░░╚═╝╚═╝░░╚══╝╚═════╝░
- * 
- *                                 Arweave Name Service 
- * 
- * @author charmful0x
- * @website https://ar.page
- * 
- **/
-
-
 export async function handle(state, action) {
-  const input = action.input;
-  const caller = action.caller;
-  // STATE
-  const users = state.users;
-  const balances = state.balances;
-  const availableLabels = state.availableLabels;
-  const foreignCalls = state.foreignCalls;
-  const invocations = state.invocations;
-  const deposits = state.deposits;
-  const withdrawals = state.withdrawals;
-  // CONSTANTS
-  const WDLT = "";
-  //SMARTWEAVE API
-  const blockHeight = SmartWeave.block.height;
-
-  // alphabetical lower case characters + integers from 0 to 9
-  const allowedCharCodes = [
-    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104,
-    105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
-    120, 121, 122,
-  ];
-  // ERRORS LIST,
-  const ERROR_INVALID_ARWEAVE_ADDRESS =
-    "the provided string is not a valid Arweave address";
-  const ERROR_INVALID_PRIMITIVE_TYPE =
-    "the function was supplied by an invalid primitive type";
-  const ERROR_MISSING_REQUIRED_PARAMETER =
-    "the function still require parameters";
-  const ERROR_INVALID_STRING_LENGTH =
-    "the supplied string length is not accepted";
-  const ERROR_INVALID_CHARCODE =
-    "the string contains an invalid character code";
-  const ERROR_LABEL_SUPPLY_IS_ZERO = "label's supply is consumed";
-  const ERROR_LABEL_ALREADY_ACQUIRED = "the given label has been minted";
-  const ERROR_MISSING_REQUIRED_TAG = "the transaction requires a missing tag";
-  const ERROR_INVALID_AVATAR_TYPE =
-    "only image/* MIME type is allowed for avatars";
-  const ERROR_INVALID_URL_TYPE = "the given url mime type is not supported";
-  const ERROR_CALLER_EXIST = "the caller has already init-mint";
-  const ERROR_CALLER_NOT_EXIST = "the caller has not init-mint";
-  const ERROR_USER_HAS_NOT_REGISTERED =
-    "caller must execute 'setProfile' before performing this action";
-  const ERROR_INVALID_LABEL_FORMAT = "the given string is not a valid label";
-  const ERROR_LABEL_DOES_NOT_RESOLVE =
-    "the given label does not resolve to an address";
-  const ERROR_DATA_TYPE_UNSUPPORTED =
-    "the provided primitive type is not supported";
-  const ERROR_INVALID_LENGTH = "options entries count exceed the limits";
-  const ERROR_DUPLICATED_TX =
-    "this transaction's deposit has been already reflected";
-  const ERROR_INVALID_DEPOSITOR =
-    "the function's caller is not the deposit TXID owner";
-  const ERROR_INVALID_DEPOSIT_TX =
-    "the provided deposit transaction is not valid";
-  const ERROR_MISSING_INPUT_PROPOERTY = "missing a required Input's key";
-  const ERROR_WRONG_FCP_FUNCTION = "deposit's function must be a 'transfer'";
-  const ERROR_INVALID_TARGET =
-    "deposit's TX target must be equal to this contract ID";
-  const ERROR_CALLER_NOT_REGISTERED = "the caller has not deposited before";
-  const ERROR_NOT_INTEGER = "only ineteger values are allowed";
-  const ERROR_AMOUNT_TOO_HIGH =
-    "the withdrawal qty is higher than the caller's balance";
-  const ERROR_INVALID_WITHDRAWAL_AMOUNT =
-    "only positive, non-zero integers are allowed";
-  const ERROR_LABEL_NOT_OWNED = "the given label is owned by an another user";
-  const ERROR_NO_EXTRA_LABEL_OWNED =
-    "the caller does not own more than one label to switch amongst it";
-  const ERROR_TRANSFERING_CURRENT_LABEL =
-    "you have to switch the label from currentLabel to ownedLabels before making the transfer";
-  const ERROR_INVALID_TARGET_TRANSFER =
-    "the target is not a valid arweave address";
-  const ERROR_CANNOT_ABDICT_CURENT_LABEL =
-    "label's abdiction is only allowed for multi-owned labels";
-  const ERROR_INVALID_CALLER =
-    "the caller does not has the permission to call this function";
-  const ERROR_INVALID_GH_USRNAME =
-    "the given username is not a valid github username";
-  const ERROR_INVALID_TWTR_USRNAME =
-    "the given username is not a valid Twitter username";
-  const ERROR_INVALID_CUSTOM_URL = "the given url is not valid";
-  const ERROR_REQUIRED_ARGUMENT = "the function has a missing argument";
-  const ERROR_INVALID_NUMBER_TYPE = "the number must be a positive integer";
-  const ERROR_NEGATIVE_INTEGER = "a negative number has been seeded";
-  const ERROR_NO_SUBDOMAINS_AVAILABLE = "you have reached the free-subdomains limit";
-  const ERROR_INVALID_ARWEAVE_TXID = "an invalid TXID has been passed";
-
-
-  if (input.function === "setProfile") {
-    const username = input.username;
-    const nickname = input.nickname;
-    const bio = input.bio;
-    const url = input.url;
-
-    let avatar = input.avatar;
-    let github = input.github;
-    let twitter = input.twitter;
-    let instagram = input.instagram;
-    let customUrl = input.customUrl;
-
-    const socialLinks = {};
-
-    _validateArweaveAddress(caller);
-    _validateStringTypeLength(bio, 0, 150);
-    _validateStringTypeLength(username, 2, 15);
-
-    const label = _validateUsername(username);
-    const validatedNickname = _validateNickname(nickname);
-    const labelScarcity = _getUsernameScarcity(label);
-    const labelMintingCost = _getMintingCost(label);
-    const addressColor = _generateAddressColor(caller);
-
-    if (availableLabels[labelScarcity] === 0) {
-      throw new ContractError(ERROR_LABEL_SUPPLY_IS_ZERO);
-    }
-
-    if (users.find((user) => user["user"] === caller)) {
-      throw new ContractError(ERROR_CALLER_EXIST);
-    }
-
-    if (avatar?.length) {
-      await _validateAvatar(avatar)
-    }
-    if (url.length > 0) {
-      await _validateUrl(url);
-    }
-
-    if (github) {
-      _validateGithubUsername(github);
-      socialLinks["github"] = github;
-    }
-
-    if (twitter) {
-      _validateTwitterUsername(twitter);
-      socialLinks["twitter"] = twitter;
-    }
-    
-    if (instagram) {
-      _validateInstagramUsername(instagram);
-      socialLinks["instagram"] = instagram;
-    }
-
-    if (customUrl) {
-      _validateCustomUrl(customUrl);
-      socialLinks["customUrl"] = customUrl;
-    }
-
-    // subs 1 from the label supply
-    availableLabels[labelScarcity] -= 1;
-    _checkAndSubstractMintingCost(labelMintingCost, caller);
-
-    if (label.length > 2) {
-      _por(label, labelMintingCost);
-    } else {
-      _addMintingCostToTreasury(labelMintingCost);
-    }
-
-    const labelObject = {
-      label: label,
-      scarcity: labelScarcity,
-      acquisationBlock: SmartWeave.block.height,
-      mintedFor: labelMintingCost,
-    };
-
-    users.push({
-      user: caller,
-      currentLabel: label,
-      ownedLabels: [labelObject],
-      nickname: nickname,
-      address_color: addressColor,
-      bio: bio,
-      url: url,
-      avatar: avatar,
-      earnings: 0,
-      links: socialLinks,
-      subdomains: {},
-      freeSubdomains: 3,
-    });
-
-    return { state };
-  }
-
-  if (input.function === "mint") {
-    const username = input.username;
-
-    _validateArweaveAddress(caller);
-    _validateStringTypeLength(username, 2, 15);
-
-    const label = _validateUsername(username);
-    const labelScarcity = _getUsernameScarcity(label);
-    const labelMintingCost = _getMintingCost(label);
-
-    if (availableLabels[labelScarcity] === 0) {
-      throw new ContractError(ERROR_LABEL_SUPPLY_IS_ZERO);
-    }
-
-    const callerIndex = users.findIndex((user) => user["user"] === caller);
-
-    if (callerIndex === -1) {
-      throw new ContractError(ERROR_USER_HAS_NOT_REGISTERED);
-    }
-
-    const labelObject = {
-      label: label,
-      scarcity: labelScarcity,
-      acquisationBlock: SmartWeave.block.height,
-      mintedFor: labelMintingCost,
-    };
-
-    availableLabels[labelScarcity] -= 1;
-    _checkAndSubstractMintingCost(labelMintingCost, caller);
-
-    if (label.length > 2) {
-      _por(label, labelMintingCost);
-    } else {
-      _addMintingCostToTreasury(labelMintingCost);
-    }
-
-    users[callerIndex]["ownedLabels"].push(labelObject);
-
-    return { state };
-  }
-
-  if (input.function === "switch") {
-    const label = input.label;
-
-    _validateArweaveAddress(caller);
-    const desiredLabel = _validateUsername(label, "read");
-    const callerIndex = _validateLabelSwitching(desiredLabel, caller);
-
-    users[callerIndex]["currentLabel"] = desiredLabel;
-
-    return { state };
-  }
-  
-  if (input.function === "updateProfileMetadata") {
-    if (Object.keys(input).length <= 1) {
-      throw new ContractError(ERROR_MISSING_INPUT_PROPOERTY);
-    }
-    const callerIndex = _validateUserExistence(caller);
-
-    if (input.bio) {
-      _validateStringTypeLength(input.bio, 0, 150);
-      users[callerIndex]["bio"] = input.bio;
-    }
-
-    if (input.avatar) {
-      await _validateAvatar(input.avatar);
-      users[callerIndex]["avatar"] = input.avatar;
-    }
-
-    if (input.nickname) {
-      const validatedNickname = _validateNickname(input.nickname);
-      users[callerIndex]["nickname"] = input.nickname;
-    }
-
-    if (input.github) {
-      _validateGithubUsername(input.github);
-      users[callerIndex]["links"]["github"] = input.github;
-    }
-
-    if (input.instagram) {
-      _validateInstagramUsername(input.instagram);
-      users[callerIndex]["links"]["instagram"] = input.instagram;
-    }
-
-    if (input.twitter) {
-      _validateTwitterUsername(input.twitter);
-      users[callerIndex]["links"]["twitter"] = input.twitter;
-    }
-
-    if (input.url) {
-      // Arweave TXID with a supported MIME type
-      await _validateUrl(input.url);
-      users[callerIndex]["url"] = input.url;
-    }
-
-    if (input.customUrl) {
-      // custom url (string)
-      _validateCustomUrl(input.customUrl);
-      users[callerIndex]["links"]["customUrl"] = input.customUrl;
-    }
-
-    return { state };
-  }
-
-
-  if (input.function === "abdictOwnership") {
-    const label = input.label;
-
-    _validateArweaveAddress(caller);
-    const desiredLabel = _validateUsername(label, "read");
-    const { labelIndex, callerIndex } = _checkAbdicationPermission(
-      desiredLabel,
-      caller
-    );
-
-    users[callerIndex]["ownedLabels"].splice(labelIndex, 1);
-
-    return { state };
-  }
-
-  if (input.function === "transfer") {
-    const target = input.target;
-    const label = input.label;
-    let autoGeneratedTargetAcc = void 0;
-
-    _validateArweaveAddress(caller);
-    _validateArweaveAddress(target);
-
-    const desiredLabel = _validateUsername(label, "read");
-    const targetColor = _generateAddressColor(target);
-    const { ownedIn, callerIndex } = _getTransferablityStatus(
-      desiredLabel,
-      caller,
-      target
-    );
-
-    const callerProfile = users[callerIndex];
-    const isTargetRegistered = users.find((usr) => usr.user === target);
-    const labelObject = callerProfile["ownedLabels"].find(
-      (labels) => labels.label === desiredLabel
-    );
-
-    if (!isTargetRegistered) {
-      autoGeneratedTargetAcc = {
-        user: target,
-        currentLabel: "",
-        ownedLabels: [],
-        nickname: `arweaver#${SmartWeave.block.height}`,
-        address_color: targetColor,
-        bio: "account's metadata auto-generated at a transfer event",
-        avatar: "",
-        links: {},
-        subdomains: {},
-        freeSubdomains: 3,
-      };
-    }
-
-    if (ownedIn === "currentLabel") {
-      if (!isTargetRegistered) {
-        autoGeneratedTargetAcc["currentLabel"] = desiredLabel;
-        autoGeneratedTargetAcc["ownedLabels"].push(labelObject);
-        users.splice(callerIndex, 1);
-        users.push(autoGeneratedTargetAcc);
-
-        return { state };
-      }
-
-      const targetIndex = users.findIndex((usr) => usr.user === target);
-      users[targetIndex]["ownedLabels"].push(labelObject);
-      users.splice(callerIndex, 1);
-
-      return { state };
-    }
-
-    if (ownedIn === "ownedLabels") {
-      const labelIndexInOwnedLabels = callerProfile["ownedLabels"].findIndex(
-        (labels) => labels.label === desiredLabel
-      );
-
-      if (!isTargetRegistered) {
-        autoGeneratedTargetAcc["currentLabel"] = desiredLabel;
-        autoGeneratedTargetAcc["ownedLabels"] = [labelObject];
-        users[callerIndex]["ownedLabels"].splice(labelIndexInOwnedLabels, 1);
-        users.push(autoGeneratedTargetAcc);
-
-        return { state };
-      }
-
-      const targetIndex = users.findIndex((usr) => usr.user === target);
-      users[targetIndex]["ownedLabels"].push(labelObject);
-      users[callerIndex]["ownedLabels"].splice(labelIndexInOwnedLabels, 1);
-
-      return { state };
-    }
-  }
-  
-   if (input.function === "setSubdomain") {
-    // testnet implementation:
-    // the subdomain is bound to the
-    // any `currentLabel`. in other words
-    // the subdomain is bound to the
-    // label that points to the user's address
-    // at any time
-    const subdomain = input.subdomain;
-    const value = input.value;
-
-    const callerIndex = _validateUserExistence(caller);
-    const normalizedSubdomain = _validateSubdomain(callerIndex, subdomain);
-
-    await _validateSubdomainValue(value);
-    // add subdomain OR update it's value if it exist already
-    state.users[callerIndex]["subdomains"][normalizedSubdomain] = value;
-    // substract a free subdomain
-    state.users[callerIndex].freeSubdomains -= 1;
-
-    return { state };
-  }
-
-  // CONTRACT OWNER PERMISSIONS
-  if (input.function === "addUrlMimeType") {
-    const type = input.type;
-  
-    await _validateOnlyOwner();
-    state.supportedUrlTypes.push(type);
-
-    return { state };
-  }
-
-  if (input.function === "revokeUrlMimeType") {
-    const type = input.type;
-
-    await _validateOnlyOwner();
-    const typeIndex = state.supportedUrlTypes.findIndex(type);
-
-    if (typeIndex !== -1) {
-      state.supportedUrlTypes.splice(typeIndex, 1);
-    }
-
-    return { state };
-  }
-  
-  // API FUNCTIONS
-  if (input.function === "isOwned") {
-    const label = input.label;
-
-    const validatedLabel = _validateUsername(label, "read");
-    const existence = users.find((usr) =>
-      usr["ownedLabels"].find((labels) => labels.label === validatedLabel)
-    );
-
-    const response = existence ? true : false;
-
-    return {
-      result: {
-        isOwned: response,
-      },
-    };
-  }
-
-  if (input.function === "getAddressOf") {
-    const label = input.label;
-    const validatedLabel = _getLabel(label);
-    const userObject = state.users.find(
-      (user) => user["currentLabel"] === validatedLabel
-    );
-
-    if (!userObject) {
-      throw new ContractError(ERROR_LABEL_DOES_NOT_RESOLVE);
-    }
-
-    const address = userObject["user"];
-
-    return {
-      result: {
-        address: address,
-      },
-    };
-  }
-  
-  if (input.function === "balanceOf") {
-    // the function return the DLT balance of an
-    // address that is deposited in the SWC (ANS)
-    const address = input.address;
-
-    _validateArweaveAddress(address);
-
-    const balance = balances[address] ? balances[address] : 0;
-
-    return {
-      result: {
-        balance: balance,
-      },
-    };
-  }
-  
-  if (input.function === "usersCount") {
-    const count = state.users.length;
-
-    return {
-      result: {
-        count: count,
-      },
-    };
-  }
-
-  // WDLT FUNCTIONS
-  if (input.function === "withdraw") {
-    const qty = input.qty;
-
-    if (!balances[caller]) {
-      throw new ContractError(ERROR_CALLER_NOT_REGISTERED);
-    }
-
-    _validateWithdrawQty(qty);
-
-    balances[caller] -= qty;
-
-    const invocation = {
-      function: "transfer",
-      target: caller,
-      qty: qty,
-    };
-
-    state.foreignCalls.push({
-      contract: WDLT,
-      input: invocation,
-    });
-
-    withdrawals.push(SmartWeave.transaction.id);
-
-    return { state };
-  }
-
-  if (input.function === "deposit") {
-    const tx = input.tx;
-
-    await _validateDepositTransaction(tx, caller);
-    const depositQty = await _getDepositQty(tx);
-
-    if (!balances[caller]) {
-      balances[caller] = 0;
-    }
-
-    balances[caller] += depositQty;
-    deposits.push(tx);
-
-    return { state };
-  }
-
-
-  // HELPER FUNCTIONS
-  function _validateArweaveAddress(address) {
-    if (typeof address !== "string" || address.length !== 43) {
-      throw new ContractError(ERROR_INVALID_ARWEAVE_ADDRESS);
-    }
-  }
-
-  function _validateUserExistence(address) {
-    _validateArweaveAddress(address);
-    const callerIndex = users.findIndex((usr) => usr.user === address);
-
-    if (callerIndex === -1) {
-      throw new ContractError(ERROR_CALLER_NOT_EXIST);
-    }
-
-    return callerIndex;
-  }
-
-  function _validateStringTypeLength(string, minLen, maxLex) {
-    if (typeof string !== "string") {
-      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
-    }
-
-    if (minLen === void 0 || maxLex === void 0) {
-      throw new ContractError(ERROR_MISSING_REQUIRED_PARAMETER);
-    }
-
-    if (string.length < minLen || string.length > maxLex) {
-      throw new ContractError(ERROR_INVALID_STRING_LENGTH);
-    }
-  }
-
-  function _validateUsername(username, option) {
-    const caseFolded = username.toLowerCase();
-    const normalizedUsername = caseFolded.normalize("NFKC");
-
-    const stringCharcodes = normalizedUsername
-      .split("")
-      .map((char) => char.charCodeAt(0));
-
-    for (let charCode of stringCharcodes) {
-      if (!allowedCharCodes.includes(charCode)) {
-        throw new ContractError(ERROR_INVALID_CHARCODE);
-      }
-    }
-
-    if (normalizedUsername.length < 2 || normalizedUsername.length > 15) {
-      throw new ContractError(ERROR_INVALID_STRING_LENGTH);
-    }
-    // used to just validate label's syntax
-    // and return the normalized label string
-    if (option === "read") {
-      return normalizedUsername;
-    }
-
-    if (
-      users.find(
-        (user) =>
-          user["currentLabel"] === normalizedUsername ||
-          user["ownedLabels"].findIndex(
-            (labels) => labels.label === normalizedUsername
-          ) !== -1
-      )
-    ) {
-      throw new ContractError(ERROR_LABEL_ALREADY_ACQUIRED);
-    }
-
-    // return the proccessed username
-    return normalizedUsername;
-  }
-
-  async function _validateAvatar(avatar) {
-    _validateStringTypeLength(avatar, 43, 43);
-    const tagsMap = new Map();
-    const avatar_tx = await SmartWeave.unsafeClient.transactions.get(avatar);
-    const tags = avatar_tx.get("tags");
-
-    for (let tag of tags) {
-      let key = tag.get("name", { decode: true, string: true });
-      let value = tag.get("value", { decode: true, string: true });
-      tagsMap.set(key, value);
-    }
-
-    if (!tagsMap.has("Content-Type")) {
-      throw new ContractError(ERROR_MISSING_REQUIRED_TAG);
-    }
-
-    if (!tagsMap.get("Content-Type").startsWith("image/")) {
-      throw new ContractError(ERROR_INVALID_AVATAR_TYPE);
-    }
-  }
-
-  async function _validateUrl(url) {
-    _validateStringTypeLength(url, 43, 43);
-
-    const tagsMap = new Map();
-    const url_tx = await SmartWeave.unsafeClient.transactions.get(url);
-    const tags = url_tx.get("tags");
-
-    for (let tag of tags) {
-      let key = tag.get("name", { decode: true, string: true });
-      let value = tag.get("value", { decode: true, string: true });
-      tagsMap.set(key, value);
-    }
-
-    if (!tagsMap.has("Content-Type")) {
-      throw new ContractError(ERROR_MISSING_REQUIRED_TAG);
-    }
-
-    if (!state.supportedUrlTypes.includes(tagsMap.get("Content-Type"))) {
-      throw new ContractError(ERROR_INVALID_URL_TYPE);
-    }
-  }
-
-  function _validateGithubUsername(username) {
-    if (typeof username !== "string") {
-      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
-    }
-
-    const regex = /^([a-zA-Z0-9_]{1,38})$/i;
-    const test = regex.test(username);
-
-    if (!test) {
-      throw new ContractError(ERROR_INVALID_GH_USRNAME);
-    }
-  }
-
-  function _validateTwitterUsername(username) {
-    if (typeof username !== "string") {
-      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
-    }
-    const regex = /^@?([a-zA-Z0-9_]{1,15})$/i;
-    const test = regex.test(username);
-
-    if (!test) {
-      throw new ContractError(ERROR_INVALID_TWTR_USRNAME);
-    }
-  }
-  
-  function _validateInstagramUsername(username) {
-    if (typeof username !== "string") {
-      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
-    }
-    const regex = /^([a-zA-Z0-9_]{1,30})$/i;
-    const test = regex.test(username);
-
-    if (!test) {
-      throw new ContractError(ERROR_INVALID_TWTR_USRNAME);
-    }
-  }
-
-  function _validateCustomUrl(link) {
-    if (typeof link !== "string") {
-      throw new ContractError(ERROR_INVALID_PRIMITIVE_TYPE);
-    }
-  }
-  
-  function _validateNickname(nickname) {
-    _validateStringTypeLength(nickname, 1, 30);
-    // trim the nickname to ensure a good UX
-    // e.g. eliminate right-left whitespace
-    const trimmed = nickname.trim();
-    _validateStringTypeLength(trimmed, 1, 30);
-
-    return trimmed;
-  }
-
-  async function _validateOnlyOwner() {
-    const contractOwner = SmartWeave.contract.owner;
-
-    if (caller !== contractOwner) {
-      throw new ContractError(ERROR_INVALID_CALLER);
-    }
-  }
-
-  function _getUsernameScarcity(username) {
-    switch (username.length) {
-      case 2:
-        return "ni";
-      case 3:
-        return "san";
-      case 4:
-        return "yon";
-      case 5:
-        return "go";
-      case 6:
-        return "roku";
-      case 7:
-        return "nana";
-      case 8:
-        return "hachi";
-      case 9:
-        return "ku";
-      case 10:
-        return "juu";
-      case 11:
-        return "juuichi";
-      case 12:
-        return "juuni";
-      case 13:
-        return "juusan";
-      case 14:
-        return "juuyon";
-      case 15:
-        return "juugo";
-      default:
-        throw new ContractError(ERROR_INVALID_STRING_LENGTH);
-    }
-  }
-
-  function _getMintingCost(username) {
-    const len = username.length;
-    const UP = 1; // unit price = 1 DLT
-    const unitsCount = 16 - len; // (maxLen + 1) - toMintLen
-
-    return unitsCount * UP;
-  }
-
-  function _getLabel(username) {
-    if (typeof username !== "string" || !username.endsWith(".ar")) {
-      throw new ContractError(ERROR_INVALID_LABEL_FORMAT);
-    }
-
-    const radical = username.slice(0, username.indexOf(".ar"));
-    const label = _validateUsername(radical, "read");
-
-    return label;
-  }
-
-  function _validateInteger(number, allowNull) {
-    if (typeof allowNull === "undefined") {
-      throw new ContractError(ERROR_REQUIRED_ARGUMENT);
-    }
-
-    if (!Number.isInteger(number)) {
-      throw new ContractError(ERROR_INVALID_NUMBER_TYPE);
-    }
-
-    if (allowNull) {
-      if (number < 0) {
-        throw new ContractError(ERROR_NEGATIVE_INTEGER);
-      }
-    } else if (number <= 0) {
-      throw new ContractError(ERROR_INVALID_NUMBER_TYPE);
-    }
-  }
-
-  async function _validateDepositTransaction(txid, address) {
-    if (deposits.includes(txid)) {
-      throw new ContractError(ERROR_DUPLICATED_TX);
-    }
-
-    const txObject = await SmartWeave.unsafeClient.transactions.get(txid);
-    const txOwner = txObject["owner"];
-    const ownerAddress = await SmartWeave.unsafeClient.wallets.ownerToAddress(
-      txOwner
-    );
-
-    if (ownerAddress !== address) {
-      throw new ContractError(ERROR_INVALID_DEPOSITOR);
-    }
-
-    const fcpTxsValidation = await SmartWeave.contracts.readContractState(
-      WDLT,
-      void 0,
-      true
-    );
-    const validity = fcpTxsValidation["validity"];
-
-    if (!validity[txid]) {
-      throw new ContractError(ERROR_INVALID_DEPOSIT_TX);
-    }
-  }
-
-  async function _getDepositQty(txid) {
-    const tagsMap = new Map();
-
-    const depositTransactionObject =
-      await SmartWeave.unsafeClient.transactions.get(txid);
-    const depositTransactionTags = depositTransactionObject.get("tags");
-
-    for (let tag of depositTransactionTags) {
-      const key = tag.get("name", { decode: true, string: true });
-      const value = tag.get("value", { decode: true, string: true });
-      tagsMap.set(key, value);
-    }
-
-    if (!tagsMap.has("Input")) {
-      throw new ContractError(ERROR_MISSING_REQUIRED_TAG);
-    }
-
-    const inputObject = JSON.parse(tagsMap.get("Input"));
-    const inputsMap = new Map(Object.entries(inputObject));
-
-    if (!inputsMap.has("qty")) {
-      throw new ContractError(ERROR_MISSING_INPUT_PROPOERTY);
-    }
-
-    if (!inputsMap.has("function")) {
-      throw new ContractError(ERROR_MISSING_INPUT_PROPOERTY);
-    }
-
-    if (inputsMap.get("function") !== "transfer") {
-      throw new ContractError(ERROR_WRONG_FCP_FUNCTION);
-    }
-
-    if (inputsMap.get("target") !== SmartWeave.contract.id) {
-      throw new ContractError(ERROR_INVALID_TARGET);
-    }
-
-    return inputsMap.get("qty");
-  }
-
-  function _validateWithdrawQty(qty) {
-    if (!Number.isInteger(qty)) {
-      throw new ContractError(ERROR_NOT_INTEGER);
-    }
-
-    if (qty > balances[caller]) {
-      throw new ContractError(ERROR_AMOUNT_TOO_HIGH);
-    }
-
-    if (qty <= 0) {
-      throw new ContractError(ERROR_INVALID_WITHDRAWAL_AMOUNT);
-    }
-  }
-
-  function _checkAndSubstractMintingCost(mintingCost, address) {
-    if (!balances[address]) {
-      throw new ContractError(ERROR_CALLER_NOT_REGISTERED);
-    }
-
-    if (balances[address] < mintingCost) {
-      throw new ContractError(ERROR_UNSUFFICIENT_BALANCE);
-    }
-
-    balances[address] -= mintingCost;
-  }
-
-  function _validateLabelSwitching(label, address) {
-    const callerIndex = _validateUserExistence(address);
-    const callerProfile = users[callerIndex];
-
-    if (callerProfile["ownedLabels"].length < 2) {
-      throw new ContractError(ERROR_NO_EXTRA_LABEL_OWNED);
-    }
-
-    if (
-      !callerProfile["ownedLabels"].find((labels) => labels.label === label)
-    ) {
-      throw new ContractError(ERROR_LABEL_NOT_OWNED);
-    }
-
-    return callerIndex;
-  }
-
-  function _getTransferablityStatus(label, from_address, to_address) {
-    if (from_address === to_address) {
-      throw new ContractError(ERROR_INVALID_TARGET_TRANSFER);
-    }
-
-    const callerIndex = users.findIndex((usr) => usr.user === from_address);
-    const callerProfile = users[callerIndex];
-
-    // check if the label is owner in the "ownedLabels" array
-    // this conditional chain checks if the label is owned at all or no
-    if (callerProfile["currentLabel"] !== label) {
-      if (
-        !callerProfile["ownedLabels"].find((labels) => labels.label === label)
-      ) {
-        throw new ContractError(ERROR_LABEL_NOT_OWNED);
-      }
-      return {
-        ownedIn: "ownedLabels",
-        callerIndex: callerIndex,
-      };
-    }
-    // if the label's transfer attempt in the currentLabel with other owned labels in ownedLabels array
-    if (
-      callerProfile["currentLabel"] === label &&
-      callerProfile["ownedLabels"].length > 1
-    ) {
-      throw new ContractError(ERROR_TRANSFERING_CURRENT_LABEL);
-    }
-    // if the caller only has one label, which is the chosen one for the transfer,
-    // make the transfer and burn caller's account
-    return {
-      ownedIn: "currentLabel",
-      callerIndex: callerIndex,
-    };
-  }
-
-  function _checkAbdicationPermission(label, address) {
-    const callerIndex = users.findIndex(
-      (usr) =>
-        usr.user === address &&
-        usr["ownedLabels"].find((labels) => labels.label === label)
-    );
-
-    if (callerIndex === -1) {
-      throw new ContractError(ERROR_LABEL_NOT_OWNED);
-    }
-
-    if (users[callerIndex]["ownedLabels"].length === 1) {
-      throw new ContractError(ERROR_CANNOT_ABDICT_CURENT_LABEL);
-    }
-
-    const labelIndex = users[callerIndex]["ownedLabels"].findIndex(
-      (labels) => labels.label === label
-    );
-
-    return {
-      labelIndex: labelIndex,
-      callerIndex: callerIndex,
-    };
-  }
-
-  function _getSharePerRadicalOwner(label) {
-    const radicalsOwners = {};
-
-    for (let usr of state.users) {
-      const radicalOwner = usr["ownedLabels"].filter(
-        (labels) => label.includes(labels["label"]) && label.length < 16
-      );
-
-      if (radicalOwner.length >= 1) {
-        radicalsOwners[usr.user] = radicalOwner;
-      }
-    }
-    const owners = {};
-
-    for (let owner in radicalsOwners) {
-      // owner === address
-
-      owners[owner] = {};
-
-      radicalsOwners[owner].forEach((labels) => {
-        if (label.includes(labels["label"])) {
-          if (!owners[owner][labels["scarcity"]]) {
-            owners[owner][labels["scarcity"]] = 1;
-          } else {
-            owners[owner][labels["scarcity"]] += 1;
-          }
-        }
-      });
-    }
-
-    return owners;
-  }
-
-
-  function _allocatePerRadicalScarcity(label) {
-    const owners = _getSharePerRadicalOwner(label);
-
-    const shares = {
-      ni: [],
-      san: [],
-      yon: [],
-      go: [],
-      roku: [],
-      nana: [],
-      hachi: [],
-      ku: [],
-      juu: [],
-      juuichi: [],
-      juuni: [],
-      juusan: [],
-      juuyon: [],
-    };
-
-    for (let user in owners) {
-      const userShares = owners[user];
-
-      for (let labelShare of Object.entries(userShares)) {
-        const shareName = labelShare[0];
-        const userShares = labelShare[1];
-        const data = [user, userShares];
-        
-        shares[shareName].push(data);
-      }
-    }
-
-    return shares;
-  }
-  
-  function _generateAddressColor(address) {
-    let hash = 0;
-    for (let i = 0; i < address.length; i++) {
-      hash = address.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    let color = "#";
-    for (let i = 0; i < 3; i++) {
-      const value = (hash >> (i * 8)) & 0xff;
-      color += ("00" + value.toString(16)).substr(-2);
-    }
-
-    return color;
-  }
-  
-  function _addMintingCostToTreasury(amount) {
-    if (!(SmartWeave.contract.owner in state.balances)) {
-      balances[SmartWeave.contract.owner] = 0;
-    }
-
-    balances[SmartWeave.contract.owner] += +amount;
-  }
-
-  function _por(toMintLable, mintingCost) {
-    const a = toMintLable.length;
-    const unsortedPercentages = [];
-    const foundRadicals = [];
-    const shares = _allocatePerRadicalScarcity(toMintLable);
-    let totalPorSharedPercentage = 0;
-
-    for (let radical in shares) {
-      const b = __getRadicalLength(radical); // radical length
-
-      if (b < a && a !== b) {
-        const radicalPercentage = (((a + b) / (a - b)) * 100) / Math.E ** b;
-        unsortedPercentages.push(radicalPercentage);
-        totalPorSharedPercentage += radicalPercentage;
-        foundRadicals.push(radical);
-      }
-    }
-
-    const sortedPercentages = unsortedPercentages.sort((a, b) => a - b);
-    const scarcityPercentagesArray = sortedPercentages.map(
-      (percentage, index) => [foundRadicals[index], percentage]
-    );
-    const finalDistribution = Object.fromEntries(scarcityPercentagesArray);
-    // treasury amount is the fixed non-distributed percentage per minted
-    // label of 2 < length < 15
-    // e.g. in this case https://github.com/decentldotland/ANS/blob/main/incentives/img/len10.png
-    // treasury's allocation is (100e^-2 - 37.8e^-2) * mintingCost 
-    const treasuryAmount = (100 - totalPorSharedPercentage) / 100 * mintingCost;
-    _addMintingCostToTreasury(treasuryAmount);
-
-    return __distributeProfitSharing(finalDistribution, shares, mintingCost, treasuryAmount);
-  }
-
-  function __distributeProfitSharing(finalDistribution, shares, mintingCost, treasuryAmount) {
-    // this variable represents the theoretical fraction of minting fee
-    // allocated for distribution as per PoR (even if there are no roots)
-    let rootsAllocatedDistribution = mintingCost - treasuryAmount;
-    for (let share in shares) {
-      const sharePerScarcity = shares[share].flat();
-
-      if (sharePerScarcity.length >= 1) { // equal to 'if roots exist in this label type'
-        const totalShares = sharePerScarcity
-          .filter((element) => typeof element === "number")
-          .reduce((a, b) => a + b, 0);
-        const totalRewardFromFee =
-          (finalDistribution[share] / 100) * mintingCost;
-        const rewardPerShare = totalRewardFromFee / totalShares;
-
-        shares[share].forEach((user) => {
-          const userAddress = user[0];
-          const sharePerUser = user[1];
-          
-          if (!balances[userAddress]) {
-            // if the user's account was setted up at a previous label transfer event
-            balances[userAddress] = 0;
-          }
-          // update the balance
-          balances[userAddress] += rewardPerShare * sharePerUser;
-          state.totalProfitSharing += rewardPerShare * sharePerUser;
-          // deduct the distributed amount from the theoretical 
-          // allocation as a root was found & rewarded
-          rootsAllocatedDistribution -= rewardPerShare *  sharePerUser;
-          // adds stats record, does not update the balance
-          __addUserEarning(userAddress, rewardPerShare * sharePerUser);
+  try {
+    const input = action.input;
+
+    if (input.function === "mint") {
+      const { mint_domain, txid, jwk_n, sig } = input;
+      _notPaused();
+
+      const domain = _normalizeDomain(mint_domain);
+      _notMinted(domain);
+      await _verifyArSignature(jwk_n, sig);
+      const caller = await _ownerToAddress(jwk_n);
+
+      !state.isPublic ? await _isWhitelisted(caller) : void 0; // check only during WL phase
+
+      const holders = state.balances.map((addr) => addr.address);
+      await _validateMintingFee(domain, txid, caller);
+      const domainColor = _generateDomainColor(domain);
+
+      if (!holders.includes(caller)) {
+        state.balances.push({
+          address: caller,
+          primary_domain: domain,
+          ownedDomains: [
+            {
+              domain: domain,
+              color: domainColor,
+              subdomains: [],
+              record: null,
+              created_at: EXM.getDate().getTime(),
+            },
+          ],
+        });
+      } else {
+        const callerIndex = _getValidateCallerIndex(caller);
+        state.balances[callerIndex].ownedDomains.push({
+          domain: domain,
+          color: domainColor,
+          subdomains: [],
+          record: null,
+          created_at: EXM.getDate().getTime(),
         });
       }
+      const domainType = _getDomainType(domain);
+      state.supply[domainType] -= 1;
+      state.minting_fees_id.push(txid);
+
+      return { state };
     }
-    // non-distributed shares from the theoretical allocated rewards are added back
-    // to the treasury (if it's not 100% distributed ; roots found in all label types)
-    if (rootsAllocatedDistribution > 0) {
-      _addMintingCostToTreasury(rootsAllocatedDistribution);
+
+    if (input.function === "transfer") {
+      const { to, domain, jwk_n, sig } = input;
+      _notPaused();
+      _validateArweaveAddress(to);
+      await _verifyArSignature(jwk_n, sig);
+
+      const normalizedDomain = _normalizeDomain(domain);
+      const caller = await _ownerToAddress(jwk_n);
+      const callerIndex = _getValidateCallerIndex(caller);
+      const callerProfile = state.balances[callerIndex];
+      _isOwnedBy(normalizedDomain, caller);
+      ContractAssert(to !== caller, "ERROR_SELF_TRANSFER");
+
+      const oldDomainIndex = state.balances[callerIndex].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
+
+      ContractAssert(oldDomainIndex >= 0, "ERROR_NOT_DOMAIN_OWNER");
+      const domainCopy =
+        state.balances[callerIndex].ownedDomains[oldDomainIndex];
+      // **logic flow to add the domain in the receiver balances**
+      const holders = state.balances.map((addr) => addr.address);
+      if (!holders.includes(to)) {
+        state.balances.push({
+          address: to,
+          primary_domain: normalizedDomain,
+          ownedDomains: [domainCopy],
+        });
+      } else {
+        const newOwnerIndex = holders.findIndex((addr) => addr === to);
+        state.balances[newOwnerIndex].ownedDomains.push(domainCopy);
+      }
+
+      // **logic flow to remove the domain from the sender balances**
+      // if the caller is transferring his primary_domain
+      if (callerProfile.ownedDomains.length === 1) {
+        state.balances.splice(callerIndex, 1);
+      } else if (
+        callerProfile.ownedDomains.length > 1 &&
+        callerProfile.primary_domain === normalizedDomain
+      ) {
+        state.balances[callerIndex].ownedDomains.splice(oldDomainIndex, 1);
+        // re-assign the `primary_domain` to the first domain in the caller's ownedDomains array
+        state.balances[callerIndex].primary_domain =
+          state.balances[callerIndex].ownedDomains[0].domain;
+      } else {
+        state.balances[callerIndex].ownedDomains.splice(oldDomainIndex, 1);
+      }
+
+      return { state };
     }
-  }
 
-  function __addUserEarning(address, rewardToAdd) {
-    const userIndex = users.findIndex((usr) => usr.user === address);
-    users[userIndex]["earnings"] += rewardToAdd;
-  }
+    if (input.function === "setPrimaryDomain") {
+      const { domain, jwk_n, sig } = input;
+      _notPaused();
+      await _verifyArSignature(jwk_n, sig);
+      const normalizedDomain = _normalizeDomain(domain);
+      const caller = await _ownerToAddress(jwk_n);
+      const callerIndex = _getValidateCallerIndex(caller);
+      _isOwnedBy(normalizedDomain, caller);
+      ContractAssert(
+        state.balances[callerIndex].primary_domain !== normalizedDomain,
+        "ERROR_EQUAL_PRIMARY"
+      );
+      state.balances[callerIndex].primary_domain = normalizedDomain;
 
-  function __getRadicalLength(scarcity) {
-    switch (scarcity) {
-      case "ni":
-        return 2;
-
-      case "san":
-        return 3;
-
-      case "yon":
-        return 4;
-
-      case "go":
-        return 5;
-
-      case "roku":
-        return 6;
-
-      case "nana":
-        return 7;
-
-      case "hachi":
-        return 8;
-
-      case "ku":
-        return 9;
-
-      case "juu":
-        return 10;
-
-      case "juuichi":
-        return 11;
-
-      case "juuni":
-        return 12;
-
-      case "juusan":
-        return 13;
-
-      case "juuyon":
-        return 14;
+      return { state };
     }
-  }
-  
-  function _validateSubdomain(userIndex, subdomain) {
-    const normalizedSubdomain = subdomain.toLowerCase().trim().normalize("NFKC");
-    _validateStringTypeLength(normalizedSubdomain, 2, 30);
 
-    const stringCharcodes = normalizedSubdomain
-      .split("")
-      .map((char) => char.charCodeAt(0));
+    if (input.function === "setRecord") {
+      const { record, jwk_n, sig, domain } = input;
+      _notPaused();
+      _validateArweaveAddress(record);
+      await _verifyArSignature(jwk_n, sig);
+      const normalizedDomain = _normalizeDomain(domain);
+      const caller = await _ownerToAddress(jwk_n);
+      const callerIndex = _getValidateCallerIndex(caller);
+      _isOwnedBy(normalizedDomain, caller);
+      const domainIndex = state.balances[callerIndex].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
 
-    for (let charCode of stringCharcodes) {
-      if (!allowedCharCodes.includes(charCode)) {
-        throw new ContractError(ERROR_INVALID_CHARCODE);
+      ContractAssert(domainIndex >= 0, "ERROR_NOT_DOMAIN_OWNER");
+      state.balances[callerIndex].ownedDomains[domainIndex].record = record;
+
+      return { state };
+    }
+
+    // SUBDOMAIN FUNCTIONS
+
+    if (input.function === "createBatchSubdomain") {
+      const { domain, subdomains, jwk_n, sig, txid } = input;
+
+      _notPaused();
+      ContractAssert(
+        Object.prototype.toString.call(subdomains) === "[object Array]" &&
+          subdomains.length,
+        "ERROR_INVALID_SUBDOMAINS_LIST"
+      );
+      await _verifyArSignature(jwk_n, sig);
+      const normalizedDomain = _normalizeDomain(domain);
+      const caller = await _ownerToAddress(jwk_n);
+      const callerIndex = _getValidateCallerIndex(caller);
+      const timestamp = EXM.getDate().getTime();
+      _isOwnedBy(normalizedDomain, caller);
+      await _validateEverpayTxGeneric(
+        txid,
+        caller,
+        state.treasury_address,
+        subdomains.length * state.subdomain_creation_fee
+      );
+
+      for (const subdomain of subdomains) {
+        const normalizedSubdomain = _normalizeDomain(subdomain.subdomain);
+        const { address, askPrice, duration } = subdomain;
+        if (address) {
+          _validateArweaveAddress(address);
+          ContractAssert(caller !== address, "ERROR_SELF_CREATION");
+          ContractAssert(
+            typeof duration === "number" &&
+              Number.isFinite(duration) &&
+              Number.isInteger(duration) &&
+              duration > 0 &&
+              duration < 367,
+            "ERROR_INVALID_DURATION"
+          );
+          askPrice
+            ? ContractAssert(
+                typeof askPrice === "number" &&
+                  isFinite(askPrice) &&
+                  askPrice >= 1e-11,
+                "ERROR_INVALID_ASK_PRICE"
+              )
+            : ContractAssert(
+                typeof askPrice === "number" && askPrice === 0,
+                "ERROR_INVALID_ASK_PRICE"
+              );
+        } else {
+          // if subdomain is for public sale, then a sale price should be specified
+          ContractAssert(
+            typeof askPrice === "number" &&
+              isFinite(askPrice) &&
+              askPrice >= 1e-11,
+            "ERROR_INVALID_ASK_PRICE"
+          );
+        }
+
+        const parentDomainIndex = state.balances[
+          callerIndex
+        ].ownedDomains.findIndex(
+          (element) => element.domain === normalizedDomain
+        );
+        const parentDomain =
+          state.balances[callerIndex].ownedDomains[parentDomainIndex];
+        ContractAssert(
+          !parentDomain.subdomains
+            .map((element) => element.subdomain)
+            .includes(normalizedSubdomain)
+        );
+        state.balances[callerIndex].ownedDomains[
+          parentDomainIndex
+        ].subdomains.push({
+          subdomain: normalizedSubdomain,
+          ask_price: askPrice,
+          owner: null,
+          for: address ? address : null,
+          expiry: timestamp + duration * 86400000,
+        });
+      }
+
+      return { state };
+    }
+
+    if (input.function === "cancelSubdomain") {
+      const { domain, subdomain } = input;
+
+      _notPaused();
+
+      const normalizedDomain = _normalizeDomain(domain);
+      const normalizedSubdomain = _normalizeDomain(subdomain);
+      const timestamp = EXM.getDate().getTime();
+      const callerIndex = state.balances.findIndex((addr) =>
+        addr.ownedDomains
+          .map((element) => element.domain)
+          .includes(normalizedDomain)
+      );
+      ContractAssert(callerIndex >= 0, "ERROR_DOMAIN_NOT_FOUND");
+      const parentDomainIndex = state.balances[
+        callerIndex
+      ].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
+      const parentDomain =
+        state.balances[callerIndex].ownedDomains[parentDomainIndex];
+      const subdomainIndex = parentDomain.subdomains.findIndex(
+        (element) => element.subdomain === normalizedSubdomain
+      );
+      ContractAssert(subdomainIndex >= 0, "ERROR_SUBDOMAIN_NOT_FOUND");
+      const subdomainOffer = parentDomain.subdomains[subdomainIndex];
+      ContractAssert(
+        subdomainOffer.owner === null && subdomainOffer.expiry < timestamp,
+        "ERROR_SUBDOMAIN_ASSIGNED"
+      );
+      state.balances[callerIndex].ownedDomains[
+        parentDomainIndex
+      ].subdomains.splice(subdomainIndex, 1);
+
+      return { state };
+    }
+
+    if (input.function === "buySubdomain") {
+      const { domain, subdomain, txid, jwk_n, sig } = input;
+
+      _notPaused();
+      await _verifyArSignature(jwk_n, sig);
+      const normalizedDomain = _normalizeDomain(domain);
+      const normalizedSubdomain = _normalizeDomain(subdomain);
+      const caller = await _ownerToAddress(jwk_n);
+      const timestamp = EXM.getDate().getTime();
+      const parentDomainOwnerIndex = state.balances.findIndex((usr) =>
+        usr.ownedDomains
+          .map((element) => element.domain)
+          .includes(normalizedDomain)
+      );
+      ContractAssert(parentDomainOwnerIndex >= 0, "ERROR_DOMAIN_NOT_MINTED");
+      const parentDomainOwner = state.balances[parentDomainOwnerIndex];
+      _isOwnedBy(normalizedDomain, parentDomainOwner.address);
+      ContractAssert(
+        caller !== parentDomainOwner.address,
+        "ERROR_INVALID_CALLER"
+      );
+      const parentDomainIndex = state.balances[
+        parentDomainOwnerIndex
+      ].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
+      const subdomainIndex = parentDomainOwner.ownedDomains[
+        parentDomainIndex
+      ].subdomains.findIndex(
+        (element) => element.subdomain === normalizedSubdomain
+      );
+      ContractAssert(subdomainIndex >= 0, "ERROR_SUBDOMAIN_NOT_FOUND");
+      const subdomainOffer =
+        parentDomainOwner.ownedDomains[parentDomainIndex].subdomains[
+          subdomainIndex
+        ];
+      ContractAssert(
+        subdomainOffer.owner === null && subdomainOffer.expiry > timestamp,
+        "ERROR_SUBDOMAIN_ASSIGNED"
+      );
+
+      if (subdomainOffer.for) {
+        ContractAssert(subdomainOffer.for === caller, "ERROR_INVALID_CALLER");
+      }
+
+      if (subdomainOffer.ask_price) {
+        await _validateEverpayTxGeneric(
+          txid,
+          caller,
+          parentDomainOwner.address,
+          subdomainOffer.ask_price
+        );
+      }
+
+      state.balances[parentDomainOwnerIndex].ownedDomains[
+        parentDomainIndex
+      ].subdomains[subdomainIndex].owner = caller;
+      return { state };
+    }
+
+    if (input.function === "unlinkSubdomain") {
+      const { domain, subdomain, jwk_n, sig } = input;
+      _notPaused();
+      await _verifyArSignature(jwk_n, sig);
+      const normalizedDomain = _normalizeDomain(domain);
+      const normalizedSubdomain = _normalizeDomain(subdomain);
+      const caller = await _ownerToAddress(jwk_n);
+
+      const parentDomainOwnerIndex = state.balances.findIndex((usr) =>
+        usr.ownedDomains
+          .map((element) => element.domain)
+          .includes(normalizedDomain)
+      );
+      ContractAssert(parentDomainOwnerIndex >= 0, "ERROR_NOT_DOMAIN_OWNER");
+      const parentDomainIndex = state.balances[
+        parentDomainOwnerIndex
+      ].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
+      ContractAssert(parentDomainIndex >= 0, "ERROR_DOMAIN_NOT_FOUND");
+      const subdomainIndex = state.balances[
+        parentDomainOwnerIndex
+      ].ownedDomains[parentDomainIndex].subdomains.findIndex(
+        (element) => element.subdomain === normalizedSubdomain
+      );
+      ContractAssert(subdomainIndex >= 0, "ERROR_SUBDOMAIN_NOT_FOUND");
+
+      const subdomainObject =
+        state.balances[parentDomainOwnerIndex].ownedDomains[parentDomainIndex]
+          .subdomains[subdomainIndex];
+      ContractAssert(subdomainObject.owner === caller, "ERROR_INVALID_CALLER");
+
+      state.balances[parentDomainOwnerIndex].ownedDomains[
+        parentDomainIndex
+      ].subdomains.splice(subdomainIndex, 1);
+      return { state };
+    }
+
+    // MARKETPLACE
+    if (input.function === "sellDomain") {
+      const { domain, address, jwk_n, sig, askPrice, txid, duration } = input;
+
+      _notPaused();
+      await _verifyArSignature(jwk_n, sig);
+
+      const normalizedDomain = _normalizeDomain(domain);
+      const caller = await _ownerToAddress(jwk_n);
+      const callerIndex = _getValidateCallerIndex(caller);
+      const callerProfile = state.balances[callerIndex];
+
+      _isOwnedBy(normalizedDomain, caller);
+
+      if (address) {
+        _validateArweaveAddress(address);
+        ContractAssert(address !== caller, "ERROR_SELF_TRANSFER");
+      }
+
+      ContractAssert(
+        typeof askPrice === "number" && isFinite(askPrice) && askPrice >= 1e-3,
+        "ERROR_INVALID_ASK_PRICE"
+      );
+      ContractAssert(
+        Number.isInteger(duration) && duration >= 1,
+        "ERROR_INVALID_DURATION"
+      );
+
+      const oldDomainIndex = state.balances[callerIndex].ownedDomains.findIndex(
+        (element) => element.domain === normalizedDomain
+      );
+
+      ContractAssert(oldDomainIndex >= 0, "ERROR_NOT_DOMAIN_OWNER");
+      const domainCopy =
+        state.balances[callerIndex].ownedDomains[oldDomainIndex];
+      await _validateEverpayTxGeneric(
+        txid,
+        caller,
+        state.treasury_address,
+        state.selling_flat_fee
+      );
+
+      const creationTimestamp = EXM.getDate().getTime();
+      const sellOrder = {
+        id: SmartWeave.transaction.id,
+        for: address ? address : null,
+        type: address ? "targeted" : "public",
+        domain: normalizedDomain,
+        object: domainCopy,
+        owner: caller,
+        ask_price: askPrice,
+        status: "open",
+        timestamp: creationTimestamp,
+        expiry: duration * 86400000 + creationTimestamp,
+      };
+
+      if (callerProfile.ownedDomains.length === 1) {
+        state.balances.splice(callerIndex, 1);
+      } else if (
+        callerProfile.ownedDomains.length > 1 &&
+        callerProfile.primary_domain === normalizedDomain
+      ) {
+        state.balances[callerIndex].ownedDomains.splice(oldDomainIndex, 1);
+        // re-assign the `primary_domain` to the first domain in the caller's ownedDomains array
+        state.balances[callerIndex].primary_domain =
+          state.balances[callerIndex].ownedDomains[0].domain;
+      } else {
+        state.balances[callerIndex].ownedDomains.splice(oldDomainIndex, 1);
+      }
+
+      state.marketplace.push(sellOrder);
+
+      return { state };
+    }
+
+    if (input.function === "executeOrder") {
+      const { id, txid, jwk_n, sig, fee_txid } = input;
+
+      _notPaused();
+      await _verifyArSignature(jwk_n, sig);
+      ContractAssert(txid !== fee_txid, "ERROR_INVALID_FEE_TXS");
+
+      const caller = await _ownerToAddress(jwk_n);
+      const holders = state.balances.map((addr) => addr.address);
+      const sellOrderIndex = state.marketplace.findIndex(
+        (order) => order.id === id
+      );
+      ContractAssert(sellOrderIndex >= 0, "ERROR_INVALID_OTC_ORDER_ID");
+      const sellOrder = state.marketplace[sellOrderIndex];
+      ContractAssert(sellOrder.status === "open", "ERROR_INVALID_SELL_ORDER");
+      ContractAssert(caller !== sellOrder.owner, "ERROR_INVALID_CALLER");
+      ContractAssert(
+        sellOrder.expiry > EXM.getDate().getTime(),
+        "ERROR_SELL_ORDER_EXPIRED"
+      );
+      if (sellOrder.type === "targeted") {
+        ContractAssert(sellOrder.for === caller, "ERROR_INVALID_SELL_ORDER");
+      }
+
+      await _validateEverpayTxGeneric(
+        txid,
+        caller,
+        sellOrder.owner,
+        sellOrder.ask_price
+      );
+      await _validateTradingFee(fee_txid, caller, sellOrder.ask_price);
+
+      if (!holders.includes(caller)) {
+        state.balances.push({
+          address: caller,
+          primary_domain: sellOrder.domain,
+          ownedDomains: [sellOrder.object],
+        });
+      } else {
+        const newOwnerIndex = holders.findIndex((addr) => addr === caller);
+        state.balances[newOwnerIndex].ownedDomains.push(sellOrder.object);
+      }
+
+      state.marketplace[sellOrderIndex].status = "executed";
+
+      return { state };
+    }
+
+    if (input.function === "cancelOrder") {
+      const { id } = input;
+
+      _notPaused();
+
+      const holders = state.balances.map((addr) => addr.address);
+      const sellOrderIndex = state.marketplace.findIndex(
+        (order) => order.id === id
+      );
+      ContractAssert(sellOrderIndex >= 0, "ERROR_INVALID_OTC_ORDER_ID");
+      const sellOrder = state.marketplace[sellOrderIndex];
+      ContractAssert(
+        EXM.getDate().getTime() > sellOrder.expiry,
+        "ERROR_CANNOT_CANCEL"
+      );
+      ContractAssert(sellOrder.status === "open", "ERROR_ORDER_NOT_CANCELABLE");
+
+      if (!holders.includes(sellOrder.owner)) {
+        state.balances.push({
+          address: sellOrder.owner,
+          primary_domain: sellOrder.domain,
+          ownedDomains: [sellOrder.object],
+        });
+      } else {
+        const newOwnerIndex = holders.findIndex(
+          (addr) => addr === sellOrder.owner
+        );
+        state.balances[newOwnerIndex].ownedDomains.push(sellOrder.object);
+      }
+
+      state.marketplace[sellOrderIndex].status = "canceled";
+
+      return { state };
+    }
+
+    // QUERY FUNCTIONS
+
+    if (input.function === "retrieveStateKey") {
+      const { key } = input;
+
+      ContractAssert(
+        typeof key === "string" && key.trim().length,
+        "ERROR_INVALID_KEY"
+      );
+
+      if (key.trim() in state) {
+        return {
+          result: state[key.trim()],
+        };
+      }
+
+      return { result: "key_not_found" };
+    }
+
+    if (input.function === "isMinted") {
+      const { domain } = input;
+      const normalizedDomain = _normalizeDomain(domain);
+      const allDomains = state.balances
+        .map((addr) => addr.ownedDomains)
+        .map((element) => element.domain)
+        .flat();
+      const isMinted = allDomains.includes(normalizedDomain);
+
+      return {
+        result: isMinted,
+      };
+    }
+
+    if (input.function === "getSubdomainsMarketplace") {
+      const reqTimestamp = EXM.getDate().getTime();
+      const subs = [];
+      const domains = state.balances
+        .map((domain) => domain.ownedDomains)
+        .flat();
+
+      for (const domain of domains) {
+        if (domain.subdomains.length) {
+          for (const subdomain of domain.subdomains) {
+            subdomain.domain = domain.domain;
+            subs.push(subdomain);
+          }
+        }
+      }
+
+      const res = subs.filter(
+        (subdomain) =>
+          subdomain.owner === null && subdomain.expiry > reqTimestamp
+      );
+
+      return {
+        result: res,
+      };
+    }
+
+    // ADMIN FUNCTIONS
+
+    if (input.function === "reversePauseState") {
+      const { jwk_n, sig } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      const currentState = state.isPaused;
+      state.isPaused = !currentState;
+
+      return { state };
+    }
+
+    if (input.function === "initPublicMint") {
+      const { jwk_n, sig } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      state.isPublic = true;
+
+      return { state };
+    }
+
+    if (input.function === "updatePricing") {
+      const { jwk_n, sig, type, new_price } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      ContractAssert(
+        Number.isInteger(new_price) &&
+          Number.isFinite(new_price) &&
+          new_price >= 1,
+        "ERROR_INVALID_NEW_PRICE"
+      );
+      ContractAssert(type in state.pricing, "ERROR_TYPE_NOT_FOUND");
+      state.pricing[type.toLowerCase()] = new_price;
+
+      return { state };
+    }
+
+    if (input.function === "updateFees") {
+      const { jwk_n, sig, type, new_value } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      ContractAssert(
+        ["selling_flat_fee", "trading_fee", "subdomain_creation_fee"].includes(
+          type
+        ),
+        "ERROR_INVALID_FEE_TYPE"
+      );
+      ContractAssert(
+        typeof new_value === "number" &&
+          Number.isFinite(new_value) &&
+          new_value > 0,
+        "ERROR_INVALID_NEW_PRICE"
+      );
+      state[type] = new_value;
+
+      return { state };
+    }
+
+    if (input.function === "updateSignatureMessage") {
+      const { jwk_n, sig, message } = input;
+
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+      ContractAssert(state.isPaused, "ERROR_CONTRACT_SHOULD_BE_PAUSED");
+
+      await _verifyArSignature(jwk_n, sig);
+      ContractAssert(
+        Object.prototype.toString.call(message) === "[object String]" &&
+          message.trim().length,
+        "ERROR_INVALID_MSG_TYPE"
+      );
+      ContractAssert(
+        !state.sig_messages.includes(message),
+        "ERROR_MSG_ALREADY_USED"
+      );
+      state.sig_messages.push(message.trim());
+      state.signatures = [];
+      return { state };
+    }
+
+    if (input.function === "updateOracleAddress") {
+      const { jwk_n, sig, address } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      _validateArweaveAddress(address);
+      ContractAssert(
+        state.whitelsiting_oracle_addr !== address,
+        "ERROR_SAME_ORACLE_ADDRESS"
+      );
+
+      state.whitelsiting_oracle_addr = address;
+      return { state };
+    }
+
+    if (input.function === "updateMoleculeEndpoint") {
+      const { jwk_n, sig, endpoint, value } = input;
+      const caller = await _ownerToAddress(jwk_n);
+      ContractAssert(caller === state.admin, "ERROR_INVALID_CALLER");
+
+      await _verifyArSignature(jwk_n, sig);
+      ContractAssert(
+        ["ar", "ever", "redstone"].includes(endpoint),
+        "ERROR_INVALID_ENDPOINT"
+      );
+      ContractAssert(
+        typeof value === "string" && value.length,
+        "ERROR_INVALID_ENDPOINT_VALUE"
+      );
+
+      state.molecule_endpoints[endpoint] = value;
+
+      return { state };
+    }
+
+    function _validateAnsDomainSyntax(domain) {
+      ContractAssert(
+        /^[a-z0-9]{2,15}$/.test(domain),
+        "ERROR_INVALID_ANS_SYNTAX"
+      );
+    }
+
+    function _normalizeDomain(domain) {
+      const caseFolded = domain.toLowerCase();
+      const normalizedDomain = caseFolded.normalize("NFKC");
+      _validateAnsDomainSyntax(normalizedDomain);
+      return normalizedDomain;
+    }
+
+    function _notMinted(domain) {
+      const target = _normalizeDomain(domain);
+      const allDomains = state.balances
+        .map((addr) => addr.ownedDomains)
+        .map((element) => element.domain)
+        .flat();
+      const marketplaceDomains = state.marketplace.map((order) => order.domain);
+      const all = allDomains.concat(marketplaceDomains);
+      ContractAssert(!all.includes(target));
+    }
+
+    function _validateArweaveAddress(address) {
+      ContractAssert(
+        /[a-z0-9_-]{43}/i.test(address),
+        "ERROR_INVALID_ARWEAVE_ADDRESS"
+      );
+    }
+
+    function _validatePubKeySyntax(jwk_n) {
+      ContractAssert(
+        typeof jwk_n === "string" && jwk_n?.length === 683,
+        "ERROR_INVALID_JWK_N_SYNTAX"
+      );
+    }
+
+    function _notPaused() {
+      ContractAssert(!state.isPaused, "ERROR_CONTRACT_PAUSED");
+    }
+
+    function _isOwnedBy(domain, address) {
+      const owner = state.balances.find((addr) =>
+        addr.ownedDomains.map((element) => element.domain).includes(domain)
+      );
+      ContractAssert(owner, "ERROR_DOMAIN_NOT_MINTED");
+      ContractAssert(owner?.address === address, "ERROR_NOT_DOMAIN_OWNER");
+    }
+
+    function _getValidateCallerIndex(address) {
+      const index = state.balances.findIndex((usr) => usr.address === address);
+      ContractAssert(index >= 0, "ERROR_CALLER_NOT_FOUND");
+      return index;
+    }
+
+    async function _ownerToAddress(pubkey) {
+      try {
+        const req = await EXM.deterministicFetch(
+          `${state.molecule_endpoints.ar}/${pubkey}`
+        );
+        const address = req.asJSON()?.address;
+        _validateArweaveAddress(address);
+        return address;
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
       }
     }
 
-    const userFreeSubdomains = state.users[userIndex].freeSubdomains;
-    const userSubdomains = state.users[userIndex].subdomains;
+    async function _verifyArSignature(owner, signature) {
+      try {
+        _validatePubKeySyntax(owner);
 
-    if (userFreeSubdomains === 0) {
-      throw new ContractError(ERROR_NO_SUBDOMAINS_AVAILABLE);
+        const sigBody = state.sig_messages;
+
+        const encodedMessage = new TextEncoder().encode(
+          `${sigBody[sigBody.length - 1]}${owner}`
+        );
+        const typedArraySig = Uint8Array.from(atob(signature), (c) =>
+          c.charCodeAt(0)
+        );
+        const isValid = await SmartWeave.arweave.crypto.verify(
+          owner,
+          encodedMessage,
+          typedArraySig
+        );
+
+        ContractAssert(isValid, "ERROR_INVALID_CALLER_SIGNATURE");
+        ContractAssert(
+          !state.signatures.includes(signature),
+          "ERROR_SIGNATURE_ALREADY_USED"
+        );
+        state.signatures.push(signature);
+      } catch (error) {
+        throw new ContractError("ERROR_INVALID_CALLER_SIGNATURE");
+      }
     }
 
-    return normalizedSubdomain;
-  }
-
-  async function _validateSubdomainValue(txid) {
-    try {
-      await SmartWeave.unsafeClient.transactions.get(txid);
-    } catch (err) {
-      return new ContractError(ERROR_INVALID_ARWEAVE_TXID);
+    async function _fetchArPrice() {
+      try {
+        const req = await EXM.deterministicFetch(
+          `${state.molecule_endpoints.redstone}`
+        );
+        const price = req.asJSON()?.value;
+        ContractAssert(!!price && price > 0, "ERROR_INVALID_AR_PRICE");
+        return price;
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
     }
-  }
 
+    async function _getEverpayTx(txid, caller) {
+      try {
+        const req = await EXM.deterministicFetch(
+          `${state.molecule_endpoints.ever}/${txid}`
+        );
+        const tx = req.asJSON();
+        ContractAssert(
+          tx?.tokenSymbol == "AR" &&
+            tx?.action === "transfer" &&
+            !!Number(tx?.amount) &&
+            tx?.to == state.treasury_address &&
+            tx?.from === caller,
+          "ERROR_INVALID_AR_PRICE"
+        );
+
+        return tx;
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
+    }
+
+    async function _validateEverpayTxGeneric(txid, from, to, amount) {
+      try {
+        const req = await EXM.deterministicFetch(
+          `${state.molecule_endpoints.ever}/${txid}`
+        );
+        const tx = req.asJSON();
+        ContractAssert(
+          tx?.tokenSymbol == "AR" &&
+            tx?.action === "transfer" &&
+            !!Number(tx?.amount) &&
+            tx?.to == to &&
+            tx?.from === from,
+          "ERROR_INVALID_AR_PRICE"
+        );
+
+        ContractAssert(
+          Number(tx?.amount) >= Number((amount * 1e12).toFixed()),
+          "ERROR_UNDERPAID"
+        );
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
+    }
+
+    async function _validateTradingFee(txid, from, trading_volume) {
+      try {
+        const req = await EXM.deterministicFetch(
+          `${state.molecule_endpoints.ever}/${txid}`
+        );
+        const tx = req.asJSON();
+        ContractAssert(
+          tx?.tokenSymbol == "AR" &&
+            tx?.action === "transfer" &&
+            !!Number(tx?.amount) &&
+            tx?.to == state.treasury_address &&
+            tx?.from === from,
+          "ERROR_INVALID_AR_PRICE"
+        );
+
+        ContractAssert(
+          Number(tx?.amount) >=
+            Number((state.trading_fee * trading_volume * 1e12).toFixed()),
+          "ERROR_UNDERPAID"
+        );
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
+    }
+
+    async function _validateMintingFee(domain, txid, caller) {
+      try {
+        const domainType = _getDomainType(domain);
+        const domainUsdFee = state.pricing[domainType];
+        const arPrice = await _fetchArPrice();
+        const expectedPaidFee = domainUsdFee / arPrice; // fee in AR;
+        const everTx = await _getEverpayTx(txid, caller);
+        const paidAr = Number(everTx?.amount);
+        const feeConstant = state.isPublic ? 0.99 : 0.9; // 10% discount for WL mints
+        ContractAssert(
+          paidAr >= Number((expectedPaidFee * feeConstant * 1e12).toFixed()),
+          "ERROR_UNDERPAID"
+        );
+        ContractAssert(!state.minting_fees_id.includes(everTx?.everHash));
+        state.total_ar_volume += Number(everTx?.amount) * 1e-12;
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
+    }
+
+    function _getDomainType(domain) {
+      return `l${domain.length}`;
+    }
+
+    function _generateDomainColor(domain) {
+      let hash = 0;
+      for (let i = 0; i < domain.length; i++) {
+        hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      let color = "#";
+      for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xff;
+        color += ("00" + value.toString(16)).substr(-2);
+      }
+      return color;
+    }
+
+    async function _isWhitelisted(address) {
+      try {
+        const req1 = await EXM.deterministicFetch(
+          `https://api.exm.dev/read/${state.whitelsiting_oracle_addr}`
+        );
+        const req2 = await EXM.deterministicFetch(
+          `https://arweave.net/-2_zTwb5KluP_9wx5swTsRb0VSifzFpPZ8UxIToNRno`
+        );
+
+        const wl = req1.asJSON()?.arweave_addresses;
+        const ans_og = req2.asJSON();
+        const list = wl.concat(ans_og);
+        ContractAssert(list.includes(address), "ERROR_CALLER_NOT_WL");
+      } catch (error) {
+        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+      }
+    }
+  } catch (error) {
+    throw new ContractError("ERROR_INVALID_FUNTION_SUPPLIED");
+  }
 }
