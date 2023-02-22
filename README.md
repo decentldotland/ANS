@@ -72,7 +72,7 @@ The [ar.page](https://ar.page) web app is multichain ANS profile resolver that u
 The ANS protocol has two gateways (arweave.gg and arweave.bio) that resolves a domain's `A` record to the associated Arweave TXID and render it in-browser. [Check the repository](https://github.com/decentldotland/ans-gateway) 
 
 ### ANS-FOR-ALL
-`ans-for-all` is a drop in module to utilize the ANS protocol in React apps. Check the [repository](https://github.com/nanofuxion/ans-for-all).
+`ans-for-all` is a drop in module to utilize the ANS protocol in React apps. Check the [repository](https://github.com/decentldotland/ans-for-all).
 
 ## Tech-Stack
 ANS Protocol utilizes cutting-edge technologies built on top of the Arweave network:
