@@ -1,0 +1,1 @@
+## contract address: [m06W4H0jisQ2BfWawxN_a6Fwv9S3NLRbMbM5voY_2Is](https://api.exm.dev/read/m06W4H0jisQ2BfWawxN_a6Fwv9S3NLRbMbM5voY_2Is)
