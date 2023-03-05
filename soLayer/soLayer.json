@@ -1,0 +1,8 @@
+{
+	"profiles": [],
+	"sig_message": "so-ans-profile-metadata",
+	"admin": "vZY2XY1RD9HIfWi8ift-1_DnHLDadZMWrufSh-_rKF0",
+	"ar_molecule": "https://molecules-exm.herokuapp.com/ar-ota",
+	"signatures": [],
+	"supported_socials": ["twitter", "github", "telegram", "instagram", "discord"]
+}
