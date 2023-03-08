@@ -2,7 +2,7 @@ export async function handle(state, action) {
   const input = action.input;
 
   if (input.function === "updateWalletMetadata") {
-    const { jwk_n, sig, nickname, bio, avatar, websites, socials } = input;
+    const { jwk_n, sig, nickname, bio, avatar, websites, socials, banner } = input;
 
     const caller = await _ownerToAddress(jwk_n);
     const callerIndex = _getCallerIndex(caller);
@@ -10,7 +10,7 @@ export async function handle(state, action) {
     await _verifyArSignature(jwk_n, sig);
 
     ContractAssert(
-      nickname || bio || avatar || websites.length || socials.length,
+      nickname || bio || avatar || banner || websites.length || socials.length,
       "ERROR_NO_SOCIAL_ARGUMETS"
     );
 
@@ -41,6 +41,14 @@ export async function handle(state, action) {
         profile.avatar = avatar.trim();
       } else {
         profile.avatar = "";
+      }
+
+      if (banner) {
+        _validateType(banner, "[object String]");
+        _validateArweaveAddress(banner);
+        profile.banner = banner.trim();
+      } else {
+        profile.banner = "";
       }
 
       if (websites) {
@@ -84,6 +92,12 @@ export async function handle(state, action) {
       _validateType(avatar, "[object String]");
       _validateArweaveAddress(avatar);
       state.profiles[callerIndex].avatar = avatar.trim();
+    }
+
+    if (banner) {
+      _validateType(banner, "[object String]");
+      _validateArweaveAddress(banner);
+      state.profiles[callerIndex].banner = banner.trim();
     }
 
     if (websites) {
