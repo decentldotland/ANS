@@ -2,7 +2,8 @@ export async function handle(state, action) {
   const input = action.input;
 
   if (input.function === "updateWalletMetadata") {
-    const { jwk_n, sig, nickname, bio, avatar, websites, socials, banner } = input;
+    const { jwk_n, sig, nickname, bio, avatar, websites, socials, banner } =
+      input;
 
     const caller = await _ownerToAddress(jwk_n);
     const callerIndex = _getCallerIndex(caller);
@@ -18,6 +19,8 @@ export async function handle(state, action) {
       const profile = {};
 
       profile.address = caller;
+      profile.followers = [];
+      profile.followings = [];
 
       if (nickname) {
         _validateType(nickname, "[object String]");
@@ -137,7 +140,7 @@ export async function handle(state, action) {
 
     await _verifyArSignature(jwk_n, sig);
     const caller = await _ownerToAddress(jwk_n);
-    const callerIndex = _getCallerIndex(caller);
+    const callerIndex = _getCallerIndex(caller, true);
     const callerProfile = state.profiles[callerIndex];
 
     if (type === "websites") {
@@ -155,6 +158,46 @@ export async function handle(state, action) {
     );
     ContractAssert(socialIndex >= 0, "ERROR_INVALID_SOCIAL_INDEX");
     state.profiles[callerIndex].socials.splice(socialIndex, 1);
+    return { state };
+  }
+
+  if (input.function === "follow") {
+    const { jwk_n, sig, address } = input;
+    await _verifyArSignature(jwk_n, sig);
+    const caller = await _ownerToAddress(jwk_n);
+    const callerIndex = _getCallerIndex(caller, true);
+    const targetIndex = _getCallerIndex(address, true);
+
+    ContractAssert(
+      !state.profiles[callerIndex].followings.includes(address),
+      "ADDRESS_ALREADY_FOLLOWED"
+    );
+    state.profiles[callerIndex].followings.push(address);
+    state.profiles[targetIndex].followers.push(caller);
+
+    return { state };
+  }
+
+  if (input.function === "unfollow") {
+    const { jwk_n, sig, address } = input;
+    await _verifyArSignature(jwk_n, sig);
+    const caller = await _ownerToAddress(jwk_n);
+    const callerIndex = _getCallerIndex(caller, true);
+    const targetIndex = _getCallerIndex(address, true);
+
+    ContractAssert(
+      state.profiles[callerIndex].followings.includes(address),
+      "ADDRESS_ALREADY_FOLLOWED"
+    );
+    const indexInCallerFollowings = state.profiles[
+      callerIndex
+    ].followings.findIndex((addr) => addr === address);
+    const indexInTargetFollowers = state.profiles[
+      targetIndex
+    ].followers.findIndex((addr) => addr === caller);
+    state.profiles[callerIndex].followings.splice(indexInCallerFollowings, 1);
+    state.profiles[targetIndex].followers.splice(indexInTargetFollowers, 1);
+
     return { state };
   }
 
@@ -200,8 +243,14 @@ export async function handle(state, action) {
     );
   }
 
-  function _getCallerIndex(address) {
-    return state.profiles.findIndex((profile) => profile.address === address);
+  function _getCallerIndex(address, assert) {
+    const index = state.profiles.findIndex(
+      (profile) => profile.address === address
+    );
+    if (assert) {
+      ContractAssert(index >= 0, "ERROR_CALLER_NOT_FOUND");
+    }
+    return index;
   }
 
   async function _ownerToAddress(pubkey) {
