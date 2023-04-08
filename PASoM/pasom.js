@@ -167,6 +167,7 @@ export async function handle(state, action) {
     const caller = await _ownerToAddress(jwk_n);
     const callerIndex = _getCallerIndex(caller, true);
     const targetIndex = _getCallerIndex(address, true);
+    ContractAssert(caller !== address, "ERROR_INVALID_OPEATION");
 
     ContractAssert(
       !state.profiles[callerIndex].followings.includes(address),
@@ -189,6 +190,7 @@ export async function handle(state, action) {
       state.profiles[callerIndex].followings.includes(address),
       "ADDRESS_ALREADY_FOLLOWED"
     );
+    ContractAssert(caller !== address, "ERROR_INVALID_OPEATION");
     const indexInCallerFollowings = state.profiles[
       callerIndex
     ].followings.findIndex((addr) => addr === address);

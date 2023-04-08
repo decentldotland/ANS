@@ -99,6 +99,6 @@ const inputs = {
 
 To read the PASoM contract state, you can simply `GET` is state using EXM REST API.
 
-`GET https://api.exm.dev/read/tdixRkgMyhafBf6J3nlm8ETc7Nl0gWP3xAFwK5f0VaU`
+`GET https://api.exm.dev/read/RwH6UF6fmmCZrtYAu0HKc-_sK31RHlRZThutK0PD5_Y`
 
 
