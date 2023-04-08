@@ -77,10 +77,28 @@ To invoke `write` operations on PASoM contract, you need to create a signature (
 
 ```
 
+#### Follow or unfollow a PASoM wallet address
+
+##### EXM interaction object
+
+```js
+const action = "follow" || "unfollow";
+const address = "...";
+
+const inputs = {
+  function: action,
+  address: address,
+  jwk_n:
+    "xGx07uNnjitWsOSfKZC-ic74oXs9qDXU5QOsAis4V3tXk0krk5zUlGYu7SlZ-4xfNVA1QsHa_pOvlgE-0xGKJvMZRZYzlYcBDsnDJgLYQc5D2B2Ng4HQjLON-Gqsxl25Uj7-VSEeUgk5b2Q4SrAoVTKLWKEtuGDqwy5qKKCvNHYShYJHbmAsjQzwCwvfn2bqKv_zFUD4QeukihfDJbVyZaiev7GoE1NzTsqJ_V_eZ9tKV_5YVy-ZVU8a9dEeTnGJm2rT6z9aCcQwd9EqVYi7h8QCbKOn2r5K2NbD6V8xjQGHvODHMO0iHk2hLzcLbfDfyn_Ej-xZsHU6LBJCTeDBy_5kWtOVlYL_RH34UA1j_IYEMVDYnQBKo5laassByvkn7nODZiXesvw6TsXPYdrqrgIL7x4Td5QVK8UHXCGXOrtAlhxfzNWyjP0z5ezAsQpzGPgGI9OKgjmPIk4K6K88BoxNmJ_XFPV1DN8qZGsPSVz2N7XN9wFetDs4CMOGyDToTDEea77TsP1ykKMcXf2h-JCZlvzFEpxS_zMaRMcwV502zXN01oCR2QpUEISf_IzxQYXsjR_F75VPpUvfmDtPYf4ftQN1cZYiH68zxn74uO7DLqIa3nUXq_IrUP7SmEnbMgjzjElp0a_u62XtmgT3GQv7SBrQdzym3yhhM-3kcok",
+  sig: "Mm1ZkTUJYsRG/YIXY2o64ndkjSX35N/yE08yG2zxejEvTRLlLOp6XG8gVhnyPUUQky2Q1wpeHfhZpQ77REVg9QcZHAFWPvzpF2MC82ItfWk8NrbQzBwSdhdV1G8tq0JROdlVHZakN4+3ikOGOT309Z5kESTbEXiqOBEoU9Cg4IcX+SFB+Pu8SNO2LSF47x/4IUrbaXIZKygMqPT1zObTfQLe3SdVIyEfq5dB4YQ7vf7VjLg5D7bhgYH1g5KAxN3sR2n2DYajDixNWjVsLVevfMPlUJ4VNF1phP6f2u83Z/PQ2e5At2Dj/ZhtNbgMFu+YG8QMW48frQ6PdtcRCMGjyh7FwizOUdih9h0xEFgtQCriolHu824Ug0FfFEmBbt9WWEeEAZgiF8QDrTaSGnTuOFZxsZKkwH4oxRm7/WFEQOD3c2+hNA052MJS95eF2CadnMiVUdugJwBCwXzd1RvzgBmzL5QzsSzCrl9Wth5pGM97bOvx3QN+kovy+WQ4HW4AaNm4GnGwt00kxTND36+pUcOYz4CYBFL2w4fsQsLMBdbxelR3C02CcRAgAa+5XdG5uQxO9M1dtiiZZIL4utWChWiVDmRonimyGYZOc9lzZhZLLjC+O1lOUtwub/EjaNl5ib7kxeNuaYUOp/l1avNNP1Nvp9eH6oeXd4wLuNBn4YQ=",
+};
+
+```
+
 ### Read Method
 
 To read the PASoM contract state, you can simply `GET` is state using EXM REST API.
 
-`GET https://api.exm.dev/read/4CbuDUBSiWTKmzq8e5NNFnwqR2Pt5wsuIOXHyvhHzBw`
+`GET https://api.exm.dev/read/tdixRkgMyhafBf6J3nlm8ETc7Nl0gWP3xAFwK5f0VaU`
 
 
