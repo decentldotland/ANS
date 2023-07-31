@@ -697,6 +697,15 @@ export async function handle(state, action) {
       return { state };
     }
 
+    if (input.function === "importState") {
+      ContractAssert(!state.isImported, "ERROR_STATE_IMPORTED");
+      const importedState = (await EXM.deterministicFetch(`https://arweave.net/3s6cviQM40DvucydzrS8-167myxYKXfo5vb4WWTieVQ`)).asJSON();
+      importedState.isImported = true;
+      state = importedState;
+
+      return { state };
+    }
+
     function _validateAnsDomainSyntax(domain) {
       ContractAssert(
         /^[a-z0-9]{2,15}$/.test(domain),
