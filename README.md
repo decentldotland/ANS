@@ -10,8 +10,6 @@
 
 [ANS](https://ans.gg) is the first and only domain name service for the [Arweave](https://arweave.gg) network. Created by the [decent.land](https://decent.land) team, ANS provides readable names for the Arweave network addresses.
 
-**_the protocol has no token yet, any associated token's smart contract address or ticker is for testing purposes only_**
-
 ## Domain's string handling
 
 ANS registry contract uses the NFKC (Normalization Form Compatibility Composition) unicode normalization algorithm and case folding to normalize the label's string before comparing its length and allowing unicode that is predefined in the contract. Then, the label gets minted and stored according to its processed format (after normalization), following a Nameprep-like methodology. 
@@ -53,9 +51,9 @@ ANS domains supply is based and limited according to the permutation with repeti
 ANS testnet has been launched distributing domains for hundred of addresses during the Genesis phase. Learn more about the airdrop [here.](https://github.com/decentldotland/ANS-Testnet-Airdrop)
 
 ## Mainnet Contract Address
-The mainnet smart contract of the ANS protocol is deployed on [EXM](https://exm.dev). 
-
-Address: [VGWeJLDLJ9ify3ezl9tW-9fhB0G-GIUd60FE-5Q-_VI](https://api.exm.dev/read/VGWeJLDLJ9ify3ezl9tW-9fhB0G-GIUd60FE-5Q-_VI)
+The mainnet smart contract of the ANS protocol is deployed on [MEM](https://mem.tech). 
+- Address (mainnet): [Tih8T1uESATJNzdwBIY3rpe25kWTzjw8uNiMRYe9I5M](https://api.mem.tech/api/state/Tih8T1uESATJNzdwBIY3rpe25kWTzjw8uNiMRYe9I5M)
+- Address (softforked from EXM): [VGWeJLDLJ9ify3ezl9tW-9fhB0G-GIUd60FE-5Q-_VI](https://arweave.net/VGWeJLDLJ9ify3ezl9tW-9fhB0G-GIUd60FE-5Q-_VI)
 
 ## ANS Related Repositories
 
@@ -76,9 +74,9 @@ The ANS protocol has two gateways (arweave.gg and arweave.bio) that resolves a d
 
 ## Tech-Stack
 ANS Protocol utilizes cutting-edge technologies built on top of the Arweave network:
-- [EXM](https://exm.dev) : smart contract protocol
+- [MEM](https://mem.tech) : smart contract protocol
 - [EverPay](https://everpay.io) : ANS payments processor
-- [molecule.sh](https://molecule.sh) : EXM developer API
+- [molecule.sh](https://molecule.sh) : MEM developer API
 
 ## Contributing
 
