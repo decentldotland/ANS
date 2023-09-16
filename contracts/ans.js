@@ -701,6 +701,9 @@ export async function handle(state, action) {
       ContractAssert(!state.isImported, "ERROR_STATE_IMPORTED");
       const importedState = (await EXM.deterministicFetch(`https://arweave.net/3s6cviQM40DvucydzrS8-167myxYKXfo5vb4WWTieVQ`)).asJSON();
       importedState.isImported = true;
+      importedState.molecule_endpoints.ar_mem = `http://ar.molecule.sh/ar-auth`;
+      importedState.sig_messages.push("ans-mainnet-mem::");
+      importedState.signatures = [];
       state = importedState;
 
       return { state };
@@ -740,7 +743,7 @@ export async function handle(state, action) {
 
     function _validatePubKeySyntax(jwk_n) {
       ContractAssert(
-        typeof jwk_n === "string" && jwk_n?.length === 683,
+        typeof jwk_n === "string",
         "ERROR_INVALID_JWK_N_SYNTAX"
       );
     }
@@ -763,47 +766,42 @@ export async function handle(state, action) {
       return index;
     }
 
-    async function _ownerToAddress(pubkey) {
-      try {
-        const req = await EXM.deterministicFetch(
-          `${state.molecule_endpoints.ar}/${pubkey}`
-        );
-        const address = req.asJSON()?.address;
-        _validateArweaveAddress(address);
-        return address;
-      } catch (error) {
-        throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+  async function _ownerToAddress(pubkey) {
+        const decryptedPubKey = atob(pubkey);
+        try {
+          const req = await EXM.deterministicFetch(
+            `${state.molecule_endpoints.ar}/${decryptedPubKey}`,
+          );
+          const address = req.asJSON()?.address;
+          _validateArweaveAddress(address);
+          return address;
+        } catch (error) {
+          throw new ContractError("ERROR_MOLECULE_SERVER_ERROR");
+        }
       }
-    }
 
-    async function _verifyArSignature(owner, signature) {
-      try {
-        _validatePubKeySyntax(owner);
+  async function _verifyArSignature(owner, signature) {
+        try {
+          const decryptedOwner = atob(owner);
+          _validatePubKeySyntax(owner);
 
-        const sigBody = state.sig_messages;
+          const sigBody = state.sig_messages;
 
-        const encodedMessage = new TextEncoder().encode(
-          `${sigBody[sigBody.length - 1]}${owner}`
-        );
-        const typedArraySig = Uint8Array.from(atob(signature), (c) =>
-          c.charCodeAt(0)
-        );
-        const isValid = await SmartWeave.arweave.crypto.verify(
-          owner,
-          encodedMessage,
-          typedArraySig
-        );
+          const encodedMessage = btoa(`${sigBody[sigBody.length - 1]}${decryptedOwner}`);
 
-        ContractAssert(isValid, "ERROR_INVALID_CALLER_SIGNATURE");
-        ContractAssert(
-          !state.signatures.includes(signature),
-          "ERROR_SIGNATURE_ALREADY_USED"
-        );
-        state.signatures.push(signature);
-      } catch (error) {
-        throw new ContractError("ERROR_INVALID_CALLER_SIGNATURE");
+          const isValid = (
+            await EXM.deterministicFetch(
+              `${state.molecule_endpoints.ar_mem}/${owner}/${encodedMessage}/${signature}`,
+            )
+          )?.asJSON()?.result;
+
+          ContractAssert(isValid, "ERROR_INVALID_CALLER_SIGNATURE");
+          ContractAssert(!state.signatures.includes(signature), "ERROR_SIGNATURE_ALREADY_USED");
+          state.signatures.push(signature);
+        } catch (error) {
+          throw new ContractError("ERROR_INVALID_CALLER_SIGNATURE");
+        }
       }
-    }
 
     async function _fetchArPrice() {
       try {
