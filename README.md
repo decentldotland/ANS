@@ -5,6 +5,8 @@
   <h3 align="center"><code>@decentldotland/ANS</code></h3>
   <p align="center">The Universal User Identifier ID for Arweave Network</p>
 </p>
+
+> as of June 1st 2026, ANS namespace formed a subset of the Permaweb-unified namespace, Permaweb Names -- [learn more](https://ao.arweave.net/#/blog/permaweb-names)
    
 ## Arweave Name Service
 
